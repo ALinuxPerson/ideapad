@@ -13,6 +13,9 @@ pub mod system_performance_mode;
 
 pub use prelude::*;
 
+#[cfg(not(target_os = "linux"))]
+compile_error!("this crate only works on linux systems due to its dependency on the `acpi_call` kernel module");
+
 pub fn initialize() -> profile::Result<()> {
     let _ = Profile::auto_detect()?;
 
