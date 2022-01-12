@@ -102,6 +102,46 @@ pub struct Profile {
     pub parameters: Parameters,
 }
 
+pub struct SystemPerformanceCommands {
+    pub set: Cow<'static, str>,
+    pub get_fcmo_bit: Cow<'static, str>,
+    pub get_spmo_bit: Cow<'static, str>,
+}
+
+pub struct SystemPerformanceParameters {
+    pub intelligent_cooling: u32,
+    pub extreme_performance: u32,
+    pub battery_saving: u32,
+}
+
+pub struct SystemPerformance {
+    pub commands: SystemPerformanceCommands,
+    pub bits: SystemPerformanceModeBits,
+    pub parameters: SystemPerformanceParameters,
+}
+
+pub struct Battery {
+    pub set_command: Cow<'static, str>,
+    pub conservation: SharedBatteryConfiguration,
+    pub rapid_charge: SharedBatteryConfiguration,
+}
+
+pub struct SharedBatteryConfigurationParameters {
+    pub enable: u32,
+    pub disable: u32,
+}
+
+pub struct SharedBatteryConfiguration {
+    pub get_command: Cow<'static, str>,
+    pub parameters: SharedBatteryConfigurationParameters,
+}
+
+pub struct NewProfile {
+    pub expected_product_names: Cow<'static, [Cow<'static, str>]>,
+    pub system_performance: SystemPerformance,
+    pub battery: Battery,
+}
+
 #[macro_export]
 macro_rules! const_static_profile {
     (Profile {
