@@ -524,6 +524,18 @@ impl NewProfile {
             *global_profile = this
         }
     }
+
+    pub const fn battery_conservation(&self) -> BatteryConservationModeController {
+        BatteryConservationModeController::new(self)
+    }
+
+    pub const fn rapid_charge(&self) -> RapidChargeController {
+        RapidChargeController::new(self)
+    }
+
+    pub const fn system_performance(&self) -> SystemPerformanceModeController {
+        SystemPerformanceModeController::new(self)
+    }
 }
 
 #[macro_export]
