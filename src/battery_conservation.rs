@@ -1,5 +1,5 @@
 use crate::acpi_call::{self, acpi_call, acpi_call_expect_valid};
-use crate::profile::OldProfile;
+use crate::profile::NewProfile;
 use crate::Handler;
 use thiserror::Error;
 
@@ -19,11 +19,11 @@ pub enum Error {
 
 #[derive(Debug, Copy, Clone, Ord, PartialOrd, Eq, PartialEq, Hash)]
 pub struct BatteryConservationController<'p> {
-    pub profile: &'p OldProfile,
+    pub profile: &'p NewProfile,
 }
 
 impl<'p> BatteryConservationController<'p> {
-    pub const fn new(profile: &'p OldProfile) -> Self {
+    pub const fn new(profile: &'p NewProfile) -> Self {
         Self { profile }
     }
 
@@ -37,8 +37,8 @@ impl<'p> BatteryConservationController<'p> {
 
     pub fn enable_unchecked(&self) -> acpi_call::Result<()> {
         acpi_call(
-            self.profile.set_battery_methods.to_string(),
-            [self.profile.parameters.enable_battery_conservation],
+            self.profile.battery.set_command.to_string(),
+            [self.profile.battery.conservation.parameters.enable],
         )?;
 
         Ok(())
@@ -64,8 +64,8 @@ impl<'p> BatteryConservationController<'p> {
 
     pub fn disable(&self) -> acpi_call::Result<()> {
         acpi_call(
-            self.profile.set_battery_methods.to_string(),
-            [self.profile.parameters.disable_battery_conservation],
+            self.profile.battery.set_command.to_string(),
+            [self.profile.battery.conservation.parameters.disable],
         )?;
 
         Ok(())
@@ -73,7 +73,10 @@ impl<'p> BatteryConservationController<'p> {
 
     pub fn get(&self) -> acpi_call::Result<bool> {
         let output =
-            acpi_call_expect_valid(self.profile.get_battery_conservation_mode.to_string(), [])?;
+            acpi_call_expect_valid(
+                    self.profile.battery.conservation.get_command.to_string(),
+                []
+            )?;
 
         Ok(output != 0)
     }
@@ -88,39 +91,39 @@ impl<'p> BatteryConservationController<'p> {
 }
 
 pub fn enable_with_handler(handler: Handler) -> Result<()> {
-    OldProfile::get()
-        .battery_conservation_mode()
+    NewProfile::get()
+        .battery_conservation()
         .enable_with_handler(handler)
 }
 
 pub fn enable_unchecked() -> acpi_call::Result<()> {
-    OldProfile::get()
-        .battery_conservation_mode()
+    NewProfile::get()
+        .battery_conservation()
         .enable_unchecked()
 }
 
 pub fn enable_strict() -> Result<()> {
-    OldProfile::get().battery_conservation_mode().enable_strict()
+    NewProfile::get().battery_conservation().enable_strict()
 }
 
 pub fn enable() -> acpi_call::Result<()> {
-    OldProfile::get().battery_conservation_mode().enable()
+    NewProfile::get().battery_conservation().enable()
 }
 
 pub fn disable() -> acpi_call::Result<()> {
-    OldProfile::get().battery_conservation_mode().disable()
+    NewProfile::get().battery_conservation().disable()
 }
 
 pub fn get() -> acpi_call::Result<bool> {
-    OldProfile::get().battery_conservation_mode().get()
+    NewProfile::get().battery_conservation().get()
 }
 
 pub fn enabled() -> acpi_call::Result<bool> {
-    OldProfile::get().battery_conservation_mode().enabled()
+    NewProfile::get().battery_conservation().enabled()
 }
 
 pub fn disabled() -> acpi_call::Result<bool> {
-    OldProfile::get().battery_conservation_mode().disabled()
+    NewProfile::get().battery_conservation().disabled()
 }
 
 #[cfg(test)]
