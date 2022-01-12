@@ -1,5 +1,5 @@
 use crate::acpi_call::{self, acpi_call, acpi_call_expect_valid};
-use crate::profile::{NewProfile, SystemPerformanceBits, SystemPerformanceParameters};
+use crate::profile::{Profile, SystemPerformanceBits, SystemPerformanceParameters};
 use thiserror::Error;
 
 pub type Result<T, E = Error> = std::result::Result<T, E>;
@@ -82,11 +82,11 @@ impl SystemPerformanceMode {
 
 #[derive(Debug, Copy, Clone, Ord, PartialOrd, Eq, PartialEq, Hash)]
 pub struct SystemPerformanceController<'p> {
-    pub profile: &'p NewProfile,
+    pub profile: &'p Profile,
 }
 
 impl<'p> SystemPerformanceController<'p> {
-    pub const fn new(profile: &'p NewProfile) -> Self {
+    pub const fn new(profile: &'p Profile) -> Self {
         Self { profile }
     }
 
@@ -125,9 +125,9 @@ impl<'p> SystemPerformanceController<'p> {
 }
 
 pub fn get() -> Result<SystemPerformanceMode> {
-    NewProfile::get().system_performance().get()
+    Profile::get().system_performance().get()
 }
 
 pub fn set(mode: SystemPerformanceMode) -> acpi_call::Result<()> {
-    NewProfile::get().system_performance().set(mode)
+    Profile::get().system_performance().set(mode)
 }

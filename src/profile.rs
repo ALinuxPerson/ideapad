@@ -10,7 +10,7 @@ use crate::SystemPerformanceController;
 
 pub type Result<T, E = Error> = std::result::Result<T, E>;
 
-static NEW_PROFILE: OnceCell<RwLock<NewProfile>> = OnceCell::new();
+static NEW_PROFILE: OnceCell<RwLock<Profile>> = OnceCell::new();
 
 #[derive(Debug, Error)]
 pub enum Error {
@@ -283,14 +283,14 @@ impl SharedBatteryConfiguration {
 
 #[derive(Debug, Clone, Ord, PartialOrd, Eq, PartialEq, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
-pub struct NewProfile {
+pub struct Profile {
     pub name: Cow<'static, str>,
     pub expected_product_names: Cow<'static, [Cow<'static, str>]>,
     pub system_performance: SystemPerformance,
     pub battery: Battery,
 }
 
-impl NewProfile {
+impl Profile {
     pub const IDEAPAD_15IIL05: Self = Self::r#static(
         "IDEAPAD_15IIL05",
         borrowed_cow_array!["81YK"],

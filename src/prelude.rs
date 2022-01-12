@@ -5,7 +5,7 @@ pub use crate::{
         Result as BatteryConservationModeResult,
     },
     profile::{
-        NewProfile,
+        Profile,
         Error as ProfileError,
         Result as ProfileResult,
     },
