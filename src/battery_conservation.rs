@@ -18,11 +18,11 @@ pub enum Error {
 }
 
 #[derive(Debug, Copy, Clone, Ord, PartialOrd, Eq, PartialEq, Hash)]
-pub struct BatteryConservationModeController<'p> {
+pub struct BatteryConservationController<'p> {
     pub profile: &'p OldProfile,
 }
 
-impl<'p> BatteryConservationModeController<'p> {
+impl<'p> BatteryConservationController<'p> {
     pub const fn new(profile: &'p OldProfile) -> Self {
         Self { profile }
     }

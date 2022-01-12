@@ -1,4 +1,4 @@
-use crate::battery_conservation::BatteryConservationModeController;
+use crate::battery_conservation::BatteryConservationController;
 use crate::rapid_charge::RapidChargeController;
 use once_cell::sync::OnceCell;
 use parking_lot::{RwLock, RwLockReadGuard};
@@ -525,8 +525,8 @@ impl NewProfile {
         }
     }
 
-    pub const fn battery_conservation(&self) -> BatteryConservationModeController {
-        BatteryConservationModeController::new(self)
+    pub const fn battery_conservation(&self) -> BatteryConservationController {
+        BatteryConservationController::new(self)
     }
 
     pub const fn rapid_charge(&self) -> RapidChargeController {
@@ -696,8 +696,8 @@ impl OldProfile {
         }
     }
 
-    pub fn battery_conservation_mode(&self) -> BatteryConservationModeController {
-        BatteryConservationModeController::new(self)
+    pub fn battery_conservation_mode(&self) -> BatteryConservationController {
+        BatteryConservationController::new(self)
     }
 
     pub fn rapid_charge(&self) -> RapidChargeController {

@@ -1,7 +1,7 @@
 pub use crate::{
     acpi_call::{Error as AcpiCallError, Result as AcpiCallResult},
     battery_conservation::{
-        BatteryConservationModeController, Error as BatteryConservationModeError,
+        BatteryConservationController, Error as BatteryConservationModeError,
         Result as BatteryConservationModeResult,
     },
     profile::{
