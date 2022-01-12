@@ -11,7 +11,7 @@ pub use crate::{
     rapid_charge::{Error as RapidChargeError, RapidChargeController, Result as RapidChargeResult},
     system_performance::{
         Error as SystemPerformanceModeError, Result as SystemPerformanceModeResult,
-        SystemPerformanceMode, SystemPerformanceModeController,
+        SystemPerformanceMode, SystemPerformanceController,
     },
     Handler,
 };

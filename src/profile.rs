@@ -6,7 +6,7 @@ use smbioslib::SMBiosSystemInformation;
 use std::borrow::Cow;
 use std::io;
 use thiserror::Error;
-use crate::SystemPerformanceModeController;
+use crate::SystemPerformanceController;
 
 pub type Result<T, E = Error> = std::result::Result<T, E>;
 
@@ -533,8 +533,8 @@ impl NewProfile {
         RapidChargeController::new(self)
     }
 
-    pub const fn system_performance(&self) -> SystemPerformanceModeController {
-        SystemPerformanceModeController::new(self)
+    pub const fn system_performance(&self) -> SystemPerformanceController {
+        SystemPerformanceController::new(self)
     }
 }
 
@@ -704,8 +704,8 @@ impl OldProfile {
         RapidChargeController::new(self)
     }
 
-    pub fn system_performance_mode(&self) -> SystemPerformanceModeController {
-        SystemPerformanceModeController::new(self)
+    pub fn system_performance_mode(&self) -> SystemPerformanceController {
+        SystemPerformanceController::new(self)
     }
 }
 

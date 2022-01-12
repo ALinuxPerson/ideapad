@@ -81,11 +81,11 @@ impl SystemPerformanceMode {
 }
 
 #[derive(Debug, Copy, Clone, Ord, PartialOrd, Eq, PartialEq, Hash)]
-pub struct SystemPerformanceModeController<'p> {
+pub struct SystemPerformanceController<'p> {
     pub profile: &'p OldProfile,
 }
 
-impl<'p> SystemPerformanceModeController<'p> {
+impl<'p> SystemPerformanceController<'p> {
     pub fn new(profile: &'p OldProfile) -> Self {
         Self { profile }
     }
