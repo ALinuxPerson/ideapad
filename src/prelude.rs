@@ -5,7 +5,7 @@ pub use crate::{
         Result as BatteryConservationModeResult,
     },
     profile::{
-        Error as ProfileError, Parameters as ProfileParameters, Profile, ProfileBuilder,
+        Error as ProfileError, Parameters as ProfileParameters, Profile,
         Result as ProfileResult, SystemPerformanceModeBit, SystemPerformanceModeBits,
     },
     rapid_charge::{Error as RapidChargeError, RapidChargeController, Result as RapidChargeResult},
