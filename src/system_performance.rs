@@ -86,7 +86,7 @@ pub struct SystemPerformanceController<'p> {
 }
 
 impl<'p> SystemPerformanceController<'p> {
-    pub fn new(profile: &'p NewProfile) -> Self {
+    pub const fn new(profile: &'p NewProfile) -> Self {
         Self { profile }
     }
 
