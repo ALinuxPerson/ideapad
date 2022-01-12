@@ -189,6 +189,12 @@ pub struct SystemPerformanceParameters {
 }
 
 impl SystemPerformanceParameters {
+    pub const SHARED: Self = Self {
+        intelligent_cooling: 0x000FB001,
+        extreme_performance: 0x0012B001,
+        battery_saving: 0x0013B001,
+    };
+
     pub const fn new(intelligent_cooling: u32, extreme_performance: u32, battery_saving: u32) -> Self {
         Self {
             intelligent_cooling,
@@ -204,6 +210,26 @@ pub struct SystemPerformanceBits {
     pub intelligent_cooling: Bit,
     pub extreme_performance: Bit,
     pub battery_saving: Bit,
+}
+
+impl SystemPerformanceBits {
+    pub const SHARED: Self = Self {
+        intelligent_cooling: Bit::same(0x0),
+        extreme_performance: Bit::same(0x1),
+        battery_saving: Bit::same(0x2),
+    };
+
+    pub const fn new(
+        intelligent_cooling: Bit,
+        extreme_performance: Bit,
+        battery_saving: Bit,
+    ) -> Self {
+        Self {
+            intelligent_cooling,
+            extreme_performance,
+            battery_saving,
+        }
+    }
 }
 
 #[derive(Debug, Clone, Ord, PartialOrd, Eq, PartialEq, Hash)]
@@ -274,6 +300,15 @@ pub struct SharedBatteryConfigurationParameters {
 }
 
 impl SharedBatteryConfigurationParameters {
+    pub const CONSERVATION_SHARED: Self = Self {
+        enable: 0x03,
+        disable: 0x05,
+    };
+    pub const RAPID_CHARGE_SHARED: Self = Self {
+        enable: 0x07,
+        disable: 0x08,
+    };
+
     pub const fn new(enable: u32, disable: u32) -> Self {
         Self {
             enable,
@@ -324,6 +359,53 @@ pub struct NewProfile {
 }
 
 impl NewProfile {
+    pub const IDEAPAD_15ILL05: Self = Self::r#static(
+        borrowed_cow_array!["81YK"],
+        SystemPerformance::new(
+            SystemPerformanceCommands::r#static(
+                r#"\_SB.PCI0.LPCB.EC0.VPC0.DYTC"#,
+                r#"\_SB.PCI0.LPCB.EC0.FCMO"#,
+               r#"\_SB.PCI0.LPCB.EC0.SPMO"#,
+            ),
+            SystemPerformanceBits::SHARED,
+            SystemPerformanceParameters::SHARED,
+        ),
+        Battery::r#static(
+            r#"\_SB.PCI0.LPCB.EC0.VPC0.SBMC"#,
+            SharedBatteryConfiguration::r#static(
+                r#"\_SB.PCI0.LPCB.EC0.BTSM"#,
+                SharedBatteryConfigurationParameters::CONSERVATION_SHARED,
+            ),
+            SharedBatteryConfiguration::r#static(
+                r#"\_SB.PCI0.LPCB.EC0.QCHO"#,
+                SharedBatteryConfigurationParameters::RAPID_CHARGE_SHARED,
+            )
+        )
+    );
+    pub const IDEAPAD_AMD: Self = Self::r#static(
+        borrowed_cow_array!["81YQ", "81YM"],
+        SystemPerformance::new(
+            SystemPerformanceCommands::r#static(
+                r#"\_SB.PCI0.LPC0.EC0.VPC0.DYTC"#,
+                r#"\_SB.PCI0.LPC0.EC0.FCMO"#,
+               r#"\_SB.PCI0.LPC0.EC0.SPMO"#,
+            ),
+            SystemPerformanceBits::SHARED,
+            SystemPerformanceParameters::SHARED,
+        ),
+        Battery::r#static(
+            r#"\_SB.PCI0.LPC0.EC0.VPC0.SBMC"#,
+            SharedBatteryConfiguration::r#static(
+                r#"\_SB.PCI0.LPC0.EC0.BTSM"#,
+                SharedBatteryConfigurationParameters::CONSERVATION_SHARED,
+            ),
+            SharedBatteryConfiguration::r#static(
+                r#"\_SB.PCI0.LPC0.EC0.QCHO"#,
+                SharedBatteryConfigurationParameters::RAPID_CHARGE_SHARED,
+            )
+        )
+    );
+
     pub const fn r#static(
         expected_product_names: &'static [Cow<'static, str>],
         system_performance: SystemPerformance,
