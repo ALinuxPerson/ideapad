@@ -28,11 +28,11 @@ pub mod macros {
 }
 
 pub mod acpi_call;
-pub mod battery_conservation_mode;
+pub mod battery_conservation;
 pub mod prelude;
 pub mod profile;
 pub mod rapid_charge;
-pub mod system_performance_mode;
+pub mod system_performance;
 
 pub use prelude::*;
 

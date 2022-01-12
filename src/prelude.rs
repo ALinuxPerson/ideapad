@@ -1,6 +1,6 @@
 pub use crate::{
     acpi_call::{Error as AcpiCallError, Result as AcpiCallResult},
-    battery_conservation_mode::{
+    battery_conservation::{
         BatteryConservationModeController, Error as BatteryConservationModeError,
         Result as BatteryConservationModeResult,
     },
@@ -9,7 +9,7 @@ pub use crate::{
         Result as ProfileResult, SystemPerformanceModeBit, SystemPerformanceModeBits,
     },
     rapid_charge::{Error as RapidChargeError, RapidChargeController, Result as RapidChargeResult},
-    system_performance_mode::{
+    system_performance::{
         Error as SystemPerformanceModeError, Result as SystemPerformanceModeResult,
         SystemPerformanceMode, SystemPerformanceModeController,
     },

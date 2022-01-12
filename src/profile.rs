@@ -1,4 +1,4 @@
-use crate::battery_conservation_mode::BatteryConservationModeController;
+use crate::battery_conservation::BatteryConservationModeController;
 use crate::rapid_charge::RapidChargeController;
 use once_cell::sync::OnceCell;
 use parking_lot::{RwLock, RwLockReadGuard};
