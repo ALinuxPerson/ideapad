@@ -85,6 +85,14 @@ impl SystemPerformanceModeBits {
         extreme_performance: SystemPerformanceModeBit::same(0x1),
         battery_saving: SystemPerformanceModeBit::same(0x2),
     };
+
+    pub const fn new(intelligent_cooling: SystemPerformanceModeBit, extreme_performance: SystemPerformanceModeBit, battery_saving: SystemPerformanceModeBit) -> Self {
+        Self {
+            intelligent_cooling,
+            extreme_performance,
+            battery_saving,
+        }
+    }
 }
 
 #[derive(Debug, Clone, Ord, PartialOrd, Eq, PartialEq, Hash)]
@@ -108,10 +116,50 @@ pub struct SystemPerformanceCommands {
     pub get_spmo_bit: Cow<'static, str>,
 }
 
+impl SystemPerformanceCommands {
+    pub const fn r#static(set: &'static str, get_fcmo_bit: &'static str, get_spmo_bit: &'static str) -> Self {
+        Self {
+            set: Cow::Borrowed(set),
+            get_fcmo_bit: Cow::Borrowed(get_fcmo_bit),
+            get_spmo_bit: Cow::Borrowed(get_spmo_bit),
+        }
+    }
+
+    pub const fn dynamic(set: String, get_fcmo_bit: String, get_spmo_bit: String) -> Self {
+        Self {
+            set: Cow::Owned(set),
+            get_fcmo_bit: Cow::Owned(get_fcmo_bit),
+            get_spmo_bit: Cow::Owned(get_spmo_bit),
+        }
+    }
+
+    pub fn new(
+        set: impl Into<Cow<'static, str>>,
+        get_fcmo_bit: impl Into<Cow<'static, str>>,
+        get_spmo_bit: impl Into<Cow<'static, str>>,
+    ) -> Self {
+        Self {
+            set: set.into(),
+            get_fcmo_bit: get_fcmo_bit.into(),
+            get_spmo_bit: get_spmo_bit.into(),
+        }
+    }
+}
+
 pub struct SystemPerformanceParameters {
     pub intelligent_cooling: u32,
     pub extreme_performance: u32,
     pub battery_saving: u32,
+}
+
+impl SystemPerformanceParameters {
+    pub const fn new(intelligent_cooling: u32, extreme_performance: u32, battery_saving: u32) -> Self {
+        Self {
+            intelligent_cooling,
+            extreme_performance,
+            battery_saving,
+        }
+    }
 }
 
 pub struct SystemPerformance {
@@ -120,10 +168,54 @@ pub struct SystemPerformance {
     pub parameters: SystemPerformanceParameters,
 }
 
+impl SystemPerformance {
+    pub const fn new(
+        commands: SystemPerformanceCommands,
+        bits: SystemPerformanceModeBits,
+        parameters: SystemPerformanceParameters,
+    ) -> Self {
+        Self {
+            commands,
+            bits,
+            parameters,
+        }
+    }
+}
+
 pub struct Battery {
     pub set_command: Cow<'static, str>,
     pub conservation: SharedBatteryConfiguration,
     pub rapid_charge: SharedBatteryConfiguration,
+}
+
+impl Battery {
+    pub const fn r#static(set_command: &'static str, conservation: SharedBatteryConfiguration, rapid_charge: SharedBatteryConfiguration) -> Self {
+        Self {
+            set_command: Cow::Borrowed(set_command),
+            conservation,
+            rapid_charge,
+        }
+    }
+
+    pub const fn dynamic(set_command: String, conservation: SharedBatteryConfiguration, rapid_charge: SharedBatteryConfiguration) -> Self {
+        Self {
+            set_command: Cow::Owned(set_command),
+            conservation,
+            rapid_charge,
+        }
+    }
+
+    pub fn new(
+        set_command: impl Into<Cow<'static, str>>,
+        conservation: SharedBatteryConfiguration,
+        rapid_charge: SharedBatteryConfiguration,
+    ) -> Self {
+        Self {
+            set_command: set_command.into(),
+            conservation,
+            rapid_charge,
+        }
+    }
 }
 
 pub struct SharedBatteryConfigurationParameters {
@@ -131,15 +223,91 @@ pub struct SharedBatteryConfigurationParameters {
     pub disable: u32,
 }
 
+impl SharedBatteryConfigurationParameters {
+    pub const fn new(enable: u32, disable: u32) -> Self {
+        Self {
+            enable,
+            disable,
+        }
+    }
+}
+
 pub struct SharedBatteryConfiguration {
     pub get_command: Cow<'static, str>,
     pub parameters: SharedBatteryConfigurationParameters,
+}
+
+impl SharedBatteryConfiguration {
+    pub const fn r#static(get_command: &'static str, parameters: SharedBatteryConfigurationParameters) -> Self {
+        Self {
+            get_command: Cow::Borrowed(get_command),
+            parameters,
+        }
+    }
+
+    pub const fn dynamic(get_command: String, parameters: SharedBatteryConfigurationParameters) -> Self {
+        Self {
+            get_command: Cow::Owned(get_command),
+            parameters,
+        }
+    }
+
+    pub fn new(
+        get_command: impl Into<Cow<'static, str>>,
+        parameters: SharedBatteryConfigurationParameters,
+    ) -> Self {
+        Self {
+            get_command: get_command.into(),
+            parameters,
+        }
+    }
 }
 
 pub struct NewProfile {
     pub expected_product_names: Cow<'static, [Cow<'static, str>]>,
     pub system_performance: SystemPerformance,
     pub battery: Battery,
+}
+
+impl NewProfile {
+    pub const fn r#static(
+        expected_product_names: &'static [Cow<'static, str>],
+        system_performance: SystemPerformance,
+        battery: Battery,
+    ) -> Self {
+        Self {
+            expected_product_names: Cow::Borrowed(expected_product_names),
+            system_performance,
+            battery,
+        }
+    }
+
+    pub const fn dynamic(
+        expected_product_names: Vec<Cow<'static, str>>,
+        system_performance: SystemPerformance,
+        battery: Battery,
+    ) -> Self {
+        Self {
+            expected_product_names: Cow::Owned(expected_product_names),
+            system_performance,
+            battery,
+        }
+    }
+
+    pub fn new(
+        expected_product_names: impl IntoIterator<Item = impl Into<Cow<'static, str>>>,
+        system_performance: SystemPerformance,
+        battery: Battery,
+    ) -> Self {
+        Self::dynamic(
+            expected_product_names
+                .into_iter()
+                .map(Into::into)
+                .collect(),
+            system_performance,
+            battery,
+        )
+    }
 }
 
 #[macro_export]
