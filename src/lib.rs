@@ -4,6 +4,29 @@
 #[macro_use]
 extern crate serde;
 
+#[macro_use]
+pub mod macros {
+    #[macro_export]
+    macro_rules! borrowed_cow_array {
+        () => {
+            &[]
+        };
+        ($($item:expr),+ $(,)?) => {
+            &[$(::std::borrow::Cow::Borrowed($item)),+]
+        }
+    }
+
+    #[macro_export]
+    macro_rules! borrowed_cow_vec {
+        () => {
+            vec![]
+        };
+        ($($item:expr),+ $(,)?) => {
+            vec![$(::std::borrow::Cow::Borrowed($item)),+]
+        }
+    }
+}
+
 pub mod acpi_call;
 pub mod battery_conservation_mode;
 pub mod prelude;
