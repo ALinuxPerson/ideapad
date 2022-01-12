@@ -10,7 +10,7 @@ use crate::SystemPerformanceModeController;
 
 pub type Result<T, E = Error> = std::result::Result<T, E>;
 
-static PROFILE: OnceCell<RwLock<Profile>> = OnceCell::new();
+static PROFILE: OnceCell<RwLock<OldProfile>> = OnceCell::new();
 
 #[derive(Debug, Error)]
 pub enum Error {
@@ -97,7 +97,7 @@ impl SystemPerformanceModeBits {
 
 #[derive(Debug, Clone, Ord, PartialOrd, Eq, PartialEq, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
-pub struct Profile {
+pub struct OldProfile {
     pub set_system_performance_mode: Cow<'static, str>,
     pub get_system_performance_mode_fcmo: Cow<'static, str>,
     pub get_system_performance_mode_spmo: Cow<'static, str>,
@@ -471,7 +471,7 @@ macro_rules! const_static_profile {
         expected_product_names: &[$($expected_product_name:expr,)*],
         parameters: $parameters:expr,
     }) => {
-        $crate::profile::Profile {
+        $crate::profile::OldProfile {
             set_system_performance_mode: ::std::borrow::Cow::Borrowed($system_performance_mode_method),
             get_system_performance_mode_fcmo: ::std::borrow::Cow::Borrowed($get_system_performance_mode_fcmo),
             get_system_performance_mode_spmo: ::std::borrow::Cow::Borrowed($get_system_performance_mode_spmo),
@@ -500,7 +500,7 @@ macro_rules! const_dynamic_profile {
         expected_product_names: &[$($expected_product_name:expr,)*],
         parameters: $parameters:expr,
     }) => {
-        $crate::profile::Profile {
+        $crate::profile::OldProfile {
             set_system_performance_mode: ::std::borrow::Cow::Owned($system_performance_mode_method),
             get_system_performance_mode_fcmo: ::std::borrow::Cow::Owned($get_system_performance_mode_fcmo),
             get_system_performance_mode_spmo: ::std::borrow::Cow::Owned($get_system_performance_mode_spmo),
@@ -515,7 +515,7 @@ macro_rules! const_dynamic_profile {
     };
 }
 
-impl Profile {
+impl OldProfile {
     pub const IDEAPAD_15IIL05: Self = const_static_profile! {
         Profile {
             set_system_performance_mode: r#"\_SB.PCI0.LPCB.EC0.VPC0.DYTC"#,

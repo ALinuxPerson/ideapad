@@ -1,5 +1,5 @@
 use crate::acpi_call::{self, acpi_call, acpi_call_expect_valid};
-use crate::profile::Profile;
+use crate::profile::OldProfile;
 use crate::Handler;
 use thiserror::Error;
 
@@ -19,11 +19,11 @@ pub enum Error {
 
 #[derive(Debug, Clone, Ord, PartialOrd, Eq, PartialEq, Hash)]
 pub struct RapidChargeController<'p> {
-    pub profile: &'p Profile,
+    pub profile: &'p OldProfile,
 }
 
 impl<'p> RapidChargeController<'p> {
-    pub const fn new(profile: &'p Profile) -> Self {
+    pub const fn new(profile: &'p OldProfile) -> Self {
         Self { profile }
     }
 
@@ -87,35 +87,35 @@ impl<'p> RapidChargeController<'p> {
 }
 
 pub fn enable_with_handler(handler: Handler) -> Result<()> {
-    Profile::get().rapid_charge().enable_with_handler(handler)
+    OldProfile::get().rapid_charge().enable_with_handler(handler)
 }
 
 pub fn enable() -> acpi_call::Result<()> {
-    Profile::get().rapid_charge().enable()
+    OldProfile::get().rapid_charge().enable()
 }
 
 pub fn enable_unchecked() -> acpi_call::Result<()> {
-    Profile::get().rapid_charge().enable_unchecked()
+    OldProfile::get().rapid_charge().enable_unchecked()
 }
 
 pub fn enable_strict() -> Result<()> {
-    Profile::get().rapid_charge().enable_strict()
+    OldProfile::get().rapid_charge().enable_strict()
 }
 
 pub fn disable() -> acpi_call::Result<()> {
-    Profile::get().rapid_charge().disable()
+    OldProfile::get().rapid_charge().disable()
 }
 
 pub fn get() -> acpi_call::Result<bool> {
-    Profile::get().rapid_charge().get()
+    OldProfile::get().rapid_charge().get()
 }
 
 pub fn enabled() -> acpi_call::Result<bool> {
-    Profile::get().rapid_charge().enabled()
+    OldProfile::get().rapid_charge().enabled()
 }
 
 pub fn disabled() -> acpi_call::Result<bool> {
-    Profile::get().rapid_charge().disabled()
+    OldProfile::get().rapid_charge().disabled()
 }
 
 #[cfg(test)]

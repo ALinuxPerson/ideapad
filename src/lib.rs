@@ -40,17 +40,17 @@ pub use prelude::*;
 compile_error!("this crate only works on linux systems due to its dependency on the `acpi_call` kernel module");
 
 pub fn initialize() -> profile::Result<()> {
-    let _ = Profile::auto_detect()?;
+    let _ = OldProfile::auto_detect()?;
 
     Ok(())
 }
 
-pub fn initialize_with_profile(profile: Profile) {
-    let _ = Profile::initialize_with_profile(profile);
+pub fn initialize_with_profile(profile: OldProfile) {
+    let _ = OldProfile::initialize_with_profile(profile);
 }
 
-pub fn initialize_with_search_path(search_path: impl Iterator<Item = Profile>) -> profile::Result<()> {
-    let _ = Profile::initialize_with_search_path(search_path)?;
+pub fn initialize_with_search_path(search_path: impl Iterator<Item =OldProfile>) -> profile::Result<()> {
+    let _ = OldProfile::initialize_with_search_path(search_path)?;
 
     Ok(())
 }

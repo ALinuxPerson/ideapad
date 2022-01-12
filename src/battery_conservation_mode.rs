@@ -1,5 +1,5 @@
 use crate::acpi_call::{self, acpi_call, acpi_call_expect_valid};
-use crate::profile::Profile;
+use crate::profile::OldProfile;
 use crate::Handler;
 use thiserror::Error;
 
@@ -19,11 +19,11 @@ pub enum Error {
 
 #[derive(Debug, Copy, Clone, Ord, PartialOrd, Eq, PartialEq, Hash)]
 pub struct BatteryConservationModeController<'p> {
-    pub profile: &'p Profile,
+    pub profile: &'p OldProfile,
 }
 
 impl<'p> BatteryConservationModeController<'p> {
-    pub const fn new(profile: &'p Profile) -> Self {
+    pub const fn new(profile: &'p OldProfile) -> Self {
         Self { profile }
     }
 
@@ -88,39 +88,39 @@ impl<'p> BatteryConservationModeController<'p> {
 }
 
 pub fn enable_with_handler(handler: Handler) -> Result<()> {
-    Profile::get()
+    OldProfile::get()
         .battery_conservation_mode()
         .enable_with_handler(handler)
 }
 
 pub fn enable_unchecked() -> acpi_call::Result<()> {
-    Profile::get()
+    OldProfile::get()
         .battery_conservation_mode()
         .enable_unchecked()
 }
 
 pub fn enable_strict() -> Result<()> {
-    Profile::get().battery_conservation_mode().enable_strict()
+    OldProfile::get().battery_conservation_mode().enable_strict()
 }
 
 pub fn enable() -> acpi_call::Result<()> {
-    Profile::get().battery_conservation_mode().enable()
+    OldProfile::get().battery_conservation_mode().enable()
 }
 
 pub fn disable() -> acpi_call::Result<()> {
-    Profile::get().battery_conservation_mode().disable()
+    OldProfile::get().battery_conservation_mode().disable()
 }
 
 pub fn get() -> acpi_call::Result<bool> {
-    Profile::get().battery_conservation_mode().get()
+    OldProfile::get().battery_conservation_mode().get()
 }
 
 pub fn enabled() -> acpi_call::Result<bool> {
-    Profile::get().battery_conservation_mode().enabled()
+    OldProfile::get().battery_conservation_mode().enabled()
 }
 
 pub fn disabled() -> acpi_call::Result<bool> {
-    Profile::get().battery_conservation_mode().disabled()
+    OldProfile::get().battery_conservation_mode().disabled()
 }
 
 #[cfg(test)]
