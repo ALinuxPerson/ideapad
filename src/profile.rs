@@ -353,6 +353,7 @@ impl SharedBatteryConfiguration {
 #[derive(Debug, Clone, Ord, PartialOrd, Eq, PartialEq, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct NewProfile {
+    pub name: Cow<'static, str>,
     pub expected_product_names: Cow<'static, [Cow<'static, str>]>,
     pub system_performance: SystemPerformance,
     pub battery: Battery,
@@ -360,6 +361,7 @@ pub struct NewProfile {
 
 impl NewProfile {
     pub const IDEAPAD_15ILL05: Self = Self::r#static(
+        "IDEAPAD_15ILL05",
         borrowed_cow_array!["81YK"],
         SystemPerformance::new(
             SystemPerformanceCommands::r#static(
@@ -383,6 +385,7 @@ impl NewProfile {
         )
     );
     pub const IDEAPAD_AMD: Self = Self::r#static(
+        "IDEAPAD_AMD",
         borrowed_cow_array!["81YQ", "81YM"],
         SystemPerformance::new(
             SystemPerformanceCommands::r#static(
@@ -407,11 +410,13 @@ impl NewProfile {
     );
 
     pub const fn r#static(
+        name: &'static str,
         expected_product_names: &'static [Cow<'static, str>],
         system_performance: SystemPerformance,
         battery: Battery,
     ) -> Self {
         Self {
+            name: Cow::Borrowed(name),
             expected_product_names: Cow::Borrowed(expected_product_names),
             system_performance,
             battery,
@@ -419,11 +424,13 @@ impl NewProfile {
     }
 
     pub const fn dynamic(
+        name: String,
         expected_product_names: Vec<Cow<'static, str>>,
         system_performance: SystemPerformance,
         battery: Battery,
     ) -> Self {
         Self {
+            name: Cow::Owned(name),
             expected_product_names: Cow::Owned(expected_product_names),
             system_performance,
             battery,
@@ -431,18 +438,22 @@ impl NewProfile {
     }
 
     pub fn new(
+        name: impl Into<Cow<'static, str>>,
         expected_product_names: impl IntoIterator<Item = impl Into<Cow<'static, str>>>,
         system_performance: SystemPerformance,
         battery: Battery,
     ) -> Self {
-        Self::dynamic(
-            expected_product_names
-                .into_iter()
-                .map(Into::into)
-                .collect(),
+        Self {
+            name: name.into(),
+            expected_product_names: Cow::Owned(
+                expected_product_names
+                    .into_iter()
+                    .map(|x| x.into())
+                    .collect(),
+            ),
             system_performance,
             battery,
-        )
+        }
     }
 }
 
