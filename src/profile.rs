@@ -141,6 +141,20 @@ impl Bit {
     pub const fn inner(&self) -> BitInner {
         self.0
     }
+
+    pub const fn spmo(&self) -> u32 {
+        match self.0 {
+            BitInner::Same(value) => value,
+            BitInner::Different { spmo, .. } => spmo,
+        }
+    }
+
+    pub const fn fcmo(&self) -> u32 {
+        match self.0 {
+            BitInner::Same(value) => value,
+            BitInner::Different { fcmo, .. } => fcmo,
+        }
+    }
 }
 
 #[derive(Debug, Clone, Ord, PartialOrd, Eq, PartialEq, Hash)]
