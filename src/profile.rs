@@ -110,6 +110,36 @@ pub struct Profile {
     pub parameters: Parameters,
 }
 
+#[derive(Debug, Copy, Clone, Ord, PartialOrd, Eq, PartialEq, Hash)]
+pub enum BitInner {
+    Same(u32),
+    Different {
+        spmo: u32,
+        fcmo: u32,
+    }
+}
+
+#[derive(Debug, Copy, Clone, Ord, PartialOrd, Eq, PartialEq, Hash)]
+pub struct Bit(BitInner);
+
+impl Bit {
+    pub const fn same(value: u32) -> Self {
+        Self(BitInner::Same(value))
+    }
+
+    pub const fn different(spmo: u32, fcmo: u32) -> Self {
+        if spmo == fcmo {
+            Self(BitInner::Same(spmo))
+        } else {
+            Self(BitInner::Different { spmo, fcmo })
+        }
+    }
+
+    pub const fn inner(&self) -> BitInner {
+        self.0
+    }
+}
+
 pub struct SystemPerformanceCommands {
     pub set: Cow<'static, str>,
     pub get_fcmo_bit: Cow<'static, str>,
@@ -162,16 +192,22 @@ impl SystemPerformanceParameters {
     }
 }
 
+pub struct SystemPerformanceBits {
+    pub intelligent_cooling: Bit,
+    pub extreme_performance: Bit,
+    pub battery_saving: Bit,
+}
+
 pub struct SystemPerformance {
     pub commands: SystemPerformanceCommands,
-    pub bits: SystemPerformanceModeBits,
+    pub bits: SystemPerformanceBits,
     pub parameters: SystemPerformanceParameters,
 }
 
 impl SystemPerformance {
     pub const fn new(
         commands: SystemPerformanceCommands,
-        bits: SystemPerformanceModeBits,
+        bits: SystemPerformanceBits,
         parameters: SystemPerformanceParameters,
     ) -> Self {
         Self {
