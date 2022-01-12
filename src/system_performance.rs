@@ -93,7 +93,7 @@ impl<'p> SystemPerformanceController<'p> {
     pub fn set(&self, mode: SystemPerformanceMode) -> acpi_call::Result<()> {
         acpi_call(
             self.profile.system_performance.commands.set.to_string(),
-            [mode.setter(&self.profile.parameters)],
+            [mode.setter(&self.profile.system_performance.parameters)],
         )?;
 
         Ok(())
@@ -109,9 +109,9 @@ impl<'p> SystemPerformanceController<'p> {
             [],
         )?;
 
-        let spm_spmo = SystemPerformanceMode::from_spmo(&self.profile.system_performance_mode_bits, spmo)
+        let spm_spmo = SystemPerformanceMode::from_spmo(&self.profile.system_performance.bits, spmo)
             .ok_or(Error::InvalidSystemPerformanceMode { bit: spmo })?;
-        let spm_fcmo = SystemPerformanceMode::from_fcmo(&self.profile.system_performance_mode_bits, fcmo)
+        let spm_fcmo = SystemPerformanceMode::from_fcmo(&self.profile.system_performance.bits, fcmo)
             .ok_or(Error::InvalidSystemPerformanceMode { bit: fcmo })?;
 
         if spm_spmo != spm_fcmo {
