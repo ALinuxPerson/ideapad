@@ -11,6 +11,7 @@ use crate::SystemPerformanceModeController;
 pub type Result<T, E = Error> = std::result::Result<T, E>;
 
 static OLD_PROFILE: OnceCell<RwLock<OldProfile>> = OnceCell::new();
+static NEW_PROFILE: OnceCell<RwLock<NewProfile>> = OnceCell::new();
 
 #[derive(Debug, Error)]
 pub enum Error {
@@ -360,8 +361,8 @@ pub struct NewProfile {
 }
 
 impl NewProfile {
-    pub const IDEAPAD_15ILL05: Self = Self::r#static(
-        "IDEAPAD_15ILL05",
+    pub const IDEAPAD_15IIL05: Self = Self::r#static(
+        "IDEAPAD_15IIL05",
         borrowed_cow_array!["81YK"],
         SystemPerformance::new(
             SystemPerformanceCommands::r#static(
@@ -453,6 +454,74 @@ impl NewProfile {
             ),
             system_performance,
             battery,
+        }
+    }
+
+    pub const SEARCH_PATH: &'static [Self] = &[Self::IDEAPAD_15IIL05, Self::IDEAPAD_AMD];
+
+    pub fn find() -> Result<Self> {
+        Self::find_with_search_path(Self::SEARCH_PATH.iter().cloned())
+    }
+
+    pub fn find_with_search_path(search_path: impl IntoIterator<Item = Self>) -> Result<Self> {
+        let product_name = smbioslib::table_load_from_device()?
+            .find_map(|system: SMBiosSystemInformation| system.product_name())
+            .ok_or(Error::UnableToFindSystemInformation)?;
+
+        search_path
+            .into_iter()
+            .find(|profile| {
+                profile
+                    .expected_product_names
+                    .contains(&Cow::Borrowed(product_name.as_str()))
+            })
+            .ok_or(Error::NoValidProfileInSearchPath)
+    }
+
+    pub fn auto_detect() -> Result<RwLockReadGuard<'static, Self>> {
+        Self::initialize_with_search_path(Self::SEARCH_PATH.iter().cloned())
+    }
+
+    pub fn initialize_with_search_path(
+        search_path: impl IntoIterator<Item = Self>,
+    ) -> Result<RwLockReadGuard<'static, Self>> {
+        match NEW_PROFILE.get() {
+            Some(profile) => Ok(profile.read()),
+            None => {
+                let profile = Self::find_with_search_path(search_path)?;
+                let _ = NEW_PROFILE.set(RwLock::new(profile));
+                Ok(NEW_PROFILE.get().expect("PROFILE should be set").read())
+            }
+        }
+    }
+
+    pub fn initialize_with_profile(profile: Self) -> RwLockReadGuard<'static, Self> {
+        match NEW_PROFILE.get() {
+            Some(profile) => profile.read(),
+            None => {
+                let _ = NEW_PROFILE.set(RwLock::new(profile));
+                NEW_PROFILE.get().expect("PROFILE should be set").read()
+            }
+        }
+    }
+
+    pub fn get() -> RwLockReadGuard<'static, Self> {
+        NEW_PROFILE.get()
+            .expect("profile not initialized (tip: initialize it with the variety of methods in `Profile` or use `ideapad::initialize()` for defaults)")
+            .read()
+    }
+
+    pub fn set(this: Self) {
+        if let Err(this) = NEW_PROFILE.set(RwLock::new(this)) {
+            let this = this.into_inner();
+            let mut global_profile = NEW_PROFILE
+                .get()
+                .expect(
+                    "profile not initialized but why does `PROFILE.set(...)` return `Err(...)`?",
+                )
+                .write();
+
+            *global_profile = this
         }
     }
 }
