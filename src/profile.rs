@@ -140,6 +140,7 @@ impl Bit {
     }
 }
 
+#[derive(Debug, Clone, Ord, PartialOrd, Eq, PartialEq, Hash)]
 pub struct SystemPerformanceCommands {
     pub set: Cow<'static, str>,
     pub get_fcmo_bit: Cow<'static, str>,
@@ -176,6 +177,7 @@ impl SystemPerformanceCommands {
     }
 }
 
+#[derive(Debug, Copy, Clone, Ord, PartialOrd, Eq, PartialEq, Hash)]
 pub struct SystemPerformanceParameters {
     pub intelligent_cooling: u32,
     pub extreme_performance: u32,
@@ -192,12 +194,14 @@ impl SystemPerformanceParameters {
     }
 }
 
+#[derive(Debug, Copy, Clone, Ord, PartialOrd, Eq, PartialEq, Hash)]
 pub struct SystemPerformanceBits {
     pub intelligent_cooling: Bit,
     pub extreme_performance: Bit,
     pub battery_saving: Bit,
 }
 
+#[derive(Debug, Clone, Ord, PartialOrd, Eq, PartialEq, Hash)]
 pub struct SystemPerformance {
     pub commands: SystemPerformanceCommands,
     pub bits: SystemPerformanceBits,
@@ -218,6 +222,7 @@ impl SystemPerformance {
     }
 }
 
+#[derive(Debug, Clone, Ord, PartialOrd, Eq, PartialEq, Hash)]
 pub struct Battery {
     pub set_command: Cow<'static, str>,
     pub conservation: SharedBatteryConfiguration,
@@ -254,6 +259,7 @@ impl Battery {
     }
 }
 
+#[derive(Debug, Copy, Clone, Ord, PartialOrd, Eq, PartialEq, Hash)]
 pub struct SharedBatteryConfigurationParameters {
     pub enable: u32,
     pub disable: u32,
@@ -268,6 +274,7 @@ impl SharedBatteryConfigurationParameters {
     }
 }
 
+#[derive(Debug, Clone, Ord, PartialOrd, Eq, PartialEq, Hash)]
 pub struct SharedBatteryConfiguration {
     pub get_command: Cow<'static, str>,
     pub parameters: SharedBatteryConfigurationParameters,
@@ -299,6 +306,7 @@ impl SharedBatteryConfiguration {
     }
 }
 
+#[derive(Debug, Clone, Ord, PartialOrd, Eq, PartialEq, Hash)]
 pub struct NewProfile {
     pub expected_product_names: Cow<'static, [Cow<'static, str>]>,
     pub system_performance: SystemPerformance,
