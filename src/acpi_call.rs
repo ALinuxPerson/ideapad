@@ -60,7 +60,7 @@ pub enum Error {
 impl Error {
     const AE_NOT_FOUND: &'static str = "AE_NOT_FOUND";
 
-    pub fn maybe_method_not_found(message: String, method: String) -> Self {
+    fn maybe_method_not_found(message: String, method: String) -> Self {
         match message.as_str() {
             Self::AE_NOT_FOUND => Self::MethodNotFound { method },
             _ => Self::UnknownError { message },
