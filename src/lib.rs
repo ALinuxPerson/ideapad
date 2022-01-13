@@ -1,5 +1,4 @@
-//! Utilities for IdeaPad laptops.
-
+#![doc = include_str!("../README.md")]
 #[cfg(feature = "serde")]
 #[macro_use]
 extern crate serde;
