@@ -13,12 +13,12 @@ All in all, don't use this crate on unsupported systems.
 
 # Supported Models
 
-This crate has been tested on the Ideapad 15ILL05, although theoretically it should also work on the Ideapad AMD 
+This crate has been tested on the Ideapad 15IIL05, although theoretically it should also work on the Ideapad AMD 
 models.
 
 | **Model**       | **Product Names**              |
 |-----------------|--------------------------------|
-| Ideapad 15ILL05 | 81YK                           |
+| Ideapad 15IIL05 | 81YK                           |
 | Ideapad AMD     | 81YQ (15ARE05), 81YM (14ARE05) |
 
 # Dependencies
