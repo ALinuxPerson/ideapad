@@ -1,3 +1,5 @@
+//! An abstraction which allows this crate to be used on multiple Ideapad models.
+
 use crate::battery_conservation::BatteryConservationController;
 use crate::rapid_charge::RapidChargeController;
 use once_cell::sync::OnceCell;
@@ -8,44 +10,62 @@ use std::io;
 use thiserror::Error;
 use crate::SystemPerformanceController;
 
+/// Handy wrapper for [`Error`].
 pub type Result<T, E = Error> = std::result::Result<T, E>;
 
 static PROFILE: OnceCell<RwLock<Profile>> = OnceCell::new();
 
+/// Bad things which could happen when dealing with [`Profile`]s.
 #[derive(Debug, Error)]
 pub enum Error {
+    /// A generic IO error occurred.
     #[error("{error}")]
     Io {
+        /// The underlying IO error.
         #[from]
         error: io::Error,
     },
 
+    /// Unable to get or find the system information from the SMBIOS.
     #[error("unable to find system information from smbios")]
     UnableToFindSystemInformation,
 
+    /// No valid profile was found in the specified search path.
     #[error("no valid profiles were found in the search path")]
     NoValidProfileInSearchPath,
 }
 
+/// Actual values of [`Bit`]. It is not guaranteed that [`Self::Different`] would actually be
+/// different values; this is why [`Bit`] wraps this type.
 #[derive(Debug, Copy, Clone, Ord, PartialOrd, Eq, PartialEq, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub enum BitInner {
+    /// Same bits.
     Same(u32),
+
+    /// (not guaranteed to be) different bits.
     Different {
+        /// The SPMO bit.
         spmo: u32,
+
+        /// The FCMO bit.
         fcmo: u32,
     }
 }
 
+/// Represents an spmo and fcmo bit.
 #[derive(Debug, Copy, Clone, Ord, PartialOrd, Eq, PartialEq, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct Bit(BitInner);
 
 impl Bit {
+    /// Create a new bit with the same spmo and fcmo bits.
     pub const fn same(value: u32) -> Self {
         Self(BitInner::Same(value))
     }
 
+    /// Create a new bit with different spmo and fcmo bits. If the spmo and fcmo bits are the same,
+    /// it will use the same bit.
     pub const fn different(spmo: u32, fcmo: u32) -> Self {
         if spmo == fcmo {
             Self(BitInner::Same(spmo))
@@ -54,10 +74,12 @@ impl Bit {
         }
     }
 
+    /// Get the inner value of this bit.
     pub const fn inner(&self) -> BitInner {
         self.0
     }
 
+    /// Get the spmo bit. If same, it will return that bit.
     pub const fn spmo(&self) -> u32 {
         match self.0 {
             BitInner::Same(value) => value,
@@ -65,6 +87,7 @@ impl Bit {
         }
     }
 
+    /// Get the fcmo bit. If same, it will return that bit.
     pub const fn fcmo(&self) -> u32 {
         match self.0 {
             BitInner::Same(value) => value,
@@ -281,16 +304,45 @@ impl SharedBatteryConfiguration {
     }
 }
 
+/// A configuration which allows this crate to be used in different Ideapad models.
 #[derive(Debug, Clone, Ord, PartialOrd, Eq, PartialEq, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct Profile {
+    /// The name of this profile.
     pub name: Cow<'static, str>,
+
+    /// The product names which this profile supports.
     pub expected_product_names: Cow<'static, [Cow<'static, str>]>,
+
+    /// System performance.
     pub system_performance: SystemPerformance,
+
+    /// Battery.
     pub battery: Battery,
 }
 
 impl Profile {
+    /// Default profile for the Ideapad 15IIL05 model. The only difference between this and the
+    /// [`IDEAPAD_AMD`](Self::IDEAPAD_AMD) model is that instead of `LPC0`, it is `LPCB`.
+    ///
+    /// For example,
+    ///
+    /// The system performance set command for Ideapad 15IIL05 is:
+    ///
+    /// `\_SB.PCI0.LPCB.EC0.VPC0.DYTC`
+    ///
+    /// The system performance set command for Ideapad AMD is:
+    ///
+    /// `\_SB.PCI0.LPC0.EC0.VPC0.DYTC`
+    ///
+    /// The difference is highlighted here:
+    ///
+    /// ```text
+    /// \_SB.PCI0.LPCB.EC0.VPC0.DYTC
+    ///              ^
+    /// \_SB.PCI0.LPC0.EC0.VPC0.DYTC
+    ///              ^
+    /// ```
     pub const IDEAPAD_15IIL05: Self = Self::r#static(
         "IDEAPAD_15IIL05",
         borrowed_cow_array!["81YK"],
@@ -315,6 +367,9 @@ impl Profile {
             )
         )
     );
+
+    /// Default profile for the Ideapad AMD model. For the main differences between this and
+    /// [`IDEAPAD_15IIL05`](Self::IDEAPAD_15IIL05), see it's respective documentation.
     pub const IDEAPAD_AMD: Self = Self::r#static(
         "IDEAPAD_AMD",
         borrowed_cow_array!["81YQ", "81YM"],
@@ -340,6 +395,12 @@ impl Profile {
         )
     );
 
+    /// Create a new profile which uses stack allocated variants of types which could be constructed
+    /// at compile time.
+    ///
+    /// # Notes
+    /// While you could provide `expected_product_names` an array of [`Cow`]s manually, you could
+    /// also use the [`borrowed_cow_array`] macro to avoid boilerplate.
     pub const fn r#static(
         name: &'static str,
         expected_product_names: &'static [Cow<'static, str>],
@@ -354,6 +415,8 @@ impl Profile {
         }
     }
 
+    /// Create a new profile which uses heap allocated variants of type which could be constructed
+    /// at compile time.
     pub const fn dynamic(
         name: String,
         expected_product_names: Vec<Cow<'static, str>>,
@@ -368,6 +431,8 @@ impl Profile {
         }
     }
 
+    /// Create a new profile. Although more flexible than both [`Self::r#static`] and
+    /// [`Self::dynamic`], it can only be constructed at runtime.
     pub fn new(
         name: impl Into<Cow<'static, str>>,
         expected_product_names: impl IntoIterator<Item = impl Into<Cow<'static, str>>>,
@@ -387,12 +452,22 @@ impl Profile {
         }
     }
 
+    /// Default search path for profiles.
     pub const SEARCH_PATH: &'static [Self] = &[Self::IDEAPAD_15IIL05, Self::IDEAPAD_AMD];
 
+    /// Find the appropriate profile with the default search path.
     pub fn find() -> Result<Self> {
         Self::find_with_search_path(Self::SEARCH_PATH.iter().cloned())
     }
 
+    /// Find the appropriate profile with the specified search path.
+    ///
+    /// # Errors
+    /// If the system information couldn't be found, an [`Error::UnableToFindSystemInformation`] is
+    /// returned.
+    ///
+    /// If this laptop's model's product name couldn't be found in the search path given, a
+    /// [`Error::NoValidProfileInSearchPath`] is returned.
     pub fn find_with_search_path(search_path: impl IntoIterator<Item = Self>) -> Result<Self> {
         let product_name = smbioslib::table_load_from_device()?
             .find_map(|system: SMBiosSystemInformation| system.product_name())
@@ -408,10 +483,12 @@ impl Profile {
             .ok_or(Error::NoValidProfileInSearchPath)
     }
 
+    /// Auto detect a profile, returning a read guard to it.
     pub fn auto_detect() -> Result<RwLockReadGuard<'static, Self>> {
         Self::initialize_with_search_path(Self::SEARCH_PATH.iter().cloned())
     }
 
+    /// Initialize the global profile with the specified search path.
     pub fn initialize_with_search_path(
         search_path: impl IntoIterator<Item = Self>,
     ) -> Result<RwLockReadGuard<'static, Self>> {
@@ -425,6 +502,7 @@ impl Profile {
         }
     }
 
+    /// Initialize the global profile with the specified profile.
     pub fn initialize_with_profile(profile: Self) -> RwLockReadGuard<'static, Self> {
         match PROFILE.get() {
             Some(profile) => profile.read(),
@@ -435,12 +513,17 @@ impl Profile {
         }
     }
 
+    /// Get the current global profile.
+    ///
+    /// # Panics
+    /// If the global profile has not been initialized, this function will panic.
     pub fn get() -> RwLockReadGuard<'static, Self> {
         PROFILE.get()
             .expect("profile not initialized (tip: initialize it with the variety of methods in `Profile` or use `ideapad::initialize()` for defaults)")
             .read()
     }
 
+    /// Set the global profile.
     pub fn set(this: Self) {
         if let Err(this) = PROFILE.set(RwLock::new(this)) {
             let this = this.into_inner();
@@ -455,14 +538,17 @@ impl Profile {
         }
     }
 
+    /// Return a battery conservation controller.
     pub const fn battery_conservation(&self) -> BatteryConservationController {
         BatteryConservationController::new(self)
     }
 
+    /// Return a rapid charge controller.
     pub const fn rapid_charge(&self) -> RapidChargeController {
         RapidChargeController::new(self)
     }
 
+    /// Return a system performance controller.
     pub const fn system_performance(&self) -> SystemPerformanceController {
         SystemPerformanceController::new(self)
     }
