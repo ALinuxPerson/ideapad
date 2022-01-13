@@ -31,27 +31,27 @@ Battery conservation (mode) is a feature that allows you to save battery life by
 ```rust
 ideapad::initialize()?;
 
-if ideapad::battery_conservation_mode::enabled()? {
+if ideapad::battery_conservation::enabled()? {
     println!("Battery conservation mode is enabled");
-} else if ideapad::battery_conservation_mode::disabled()? {
+} else if ideapad::battery_conservation::disabled()? {
     println!("Battery conservation mode is disabled");
 } else {
     panic!("what");
 }
 
-battery_conservation_mode::enable()?;
+battery_conservation::enable()?;
 println!("Battery conservation mode should be enabled now...");
 
-if battery_conservation_mode::enabled()? {
+if battery_conservation::enabled()? {
     println!("...and it is.")
 } else {
     panic!("...but it isn't!");
 }
 
-battery_conservation_mode::disable()?;
+battery_conservation::disable()?;
 println!("Battery conservation mode should be disabled now...");
 
-if battery_conservation_mode::disabled()? {
+if battery_conservation::disabled()? {
     println!("...and it is.")
 } else {
     panic!("...but it isn't!");
@@ -72,14 +72,14 @@ For more information see `ideapad::Handler`.
 ```rust
 ideapad::initialize()?;
 ideapad::rapid_charge::enable()?;
-ideapad::battery_conservation_mode::enable()?; // the default handler is to switch
+ideapad::battery_conservation::enable()?; // the default handler is to switch
 assert!(ideapad::rapid_charge::disabled()?);
 
 ideapad::rapid_charge::enable()?;
-ideapad::battery_conservation_mode::enable_unchecked()?; // another handler is to ignore the problem entirely
+ideapad::battery_conservation::enable_unchecked()?; // another handler is to ignore the problem entirely
 assert!(rapid_charge::enabled()?);
 
-let error = ideapad::battery_conservation_mode::enable_strict().unwrap_err(); // another handler is to error
+let error = ideapad::battery_conservation::enable_strict().unwrap_err(); // another handler is to error
 assert!(matches!(error, ideapad::battery_conservation_mode::Error::RapidChargeEnabled));
 
 // you can arbitrarily choose which handler to use
@@ -114,7 +114,7 @@ if rapid_charge::enabled()? {
 rapid_charge::disable()?;
 println!("Rapid charge should be disabled now...");
 
-if battery_conservation_mode::disabled()? {
+if battery_conservation::disabled()? {
     println!("...and it is.")
 } else {
     panic!("...but it isn't!");
@@ -125,13 +125,13 @@ This mode conflicts with battery conservation. See the **Battery Conservation** 
 
 ```rust
 ideapad::initialize()?;
-ideapad::battery_conservation_mode::enable()?;
+ideapad::battery_conservation::enable()?;
 ideapad::rapid_charge::enable()?; // the default handler is to switch
-assert!(ideapad::battery_conservation_mode::disabled()?);
+assert!(ideapad::battery_conservation::disabled()?);
 
-ideapad::battery_conservation_mode::enable()?;
+ideapad::battery_conservatio::enable()?;
 ideapad::rapid_charge::enable_unchecked()?; // another handler is to ignore the problem entirely
-assert!(battery_conservation_mode::enabled()?);
+assert!(battery_conservation::enabled()?);
 
 let error = ideapad::rapid_charge::enable_strict().unwrap_err(); // another handler is to error
 assert!(matches!(error, ideapad::rapid_charge::Error::BatteryConservationEnabled));
