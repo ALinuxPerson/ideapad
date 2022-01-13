@@ -1,3 +1,5 @@
+//! Most commonly used types.
+
 pub use crate::{
     acpi_call::{Error as AcpiCallError, Result as AcpiCallResult},
     battery_conservation::{
