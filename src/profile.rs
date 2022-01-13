@@ -10,7 +10,7 @@ use crate::SystemPerformanceController;
 
 pub type Result<T, E = Error> = std::result::Result<T, E>;
 
-static NEW_PROFILE: OnceCell<RwLock<Profile>> = OnceCell::new();
+static PROFILE: OnceCell<RwLock<Profile>> = OnceCell::new();
 
 #[derive(Debug, Error)]
 pub enum Error {
@@ -415,36 +415,36 @@ impl Profile {
     pub fn initialize_with_search_path(
         search_path: impl IntoIterator<Item = Self>,
     ) -> Result<RwLockReadGuard<'static, Self>> {
-        match NEW_PROFILE.get() {
+        match PROFILE.get() {
             Some(profile) => Ok(profile.read()),
             None => {
                 let profile = Self::find_with_search_path(search_path)?;
-                let _ = NEW_PROFILE.set(RwLock::new(profile));
-                Ok(NEW_PROFILE.get().expect("PROFILE should be set").read())
+                let _ = PROFILE.set(RwLock::new(profile));
+                Ok(PROFILE.get().expect("PROFILE should be set").read())
             }
         }
     }
 
     pub fn initialize_with_profile(profile: Self) -> RwLockReadGuard<'static, Self> {
-        match NEW_PROFILE.get() {
+        match PROFILE.get() {
             Some(profile) => profile.read(),
             None => {
-                let _ = NEW_PROFILE.set(RwLock::new(profile));
-                NEW_PROFILE.get().expect("PROFILE should be set").read()
+                let _ = PROFILE.set(RwLock::new(profile));
+                PROFILE.get().expect("PROFILE should be set").read()
             }
         }
     }
 
     pub fn get() -> RwLockReadGuard<'static, Self> {
-        NEW_PROFILE.get()
+        PROFILE.get()
             .expect("profile not initialized (tip: initialize it with the variety of methods in `Profile` or use `ideapad::initialize()` for defaults)")
             .read()
     }
 
     pub fn set(this: Self) {
-        if let Err(this) = NEW_PROFILE.set(RwLock::new(this)) {
+        if let Err(this) = PROFILE.set(RwLock::new(this)) {
             let this = this.into_inner();
-            let mut global_profile = NEW_PROFILE
+            let mut global_profile = PROFILE
                 .get()
                 .expect(
                     "profile not initialized but why does `PROFILE.set(...)` return `Err(...)`?",
