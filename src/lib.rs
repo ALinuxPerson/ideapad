@@ -5,6 +5,9 @@ extern crate serde;
 
 #[macro_use]
 pub mod macros {
+    //! Macros which could be useful in this crate.
+
+    /// Create a statically borrowed [`Cow`] array.
     #[macro_export]
     macro_rules! borrowed_cow_array {
         () => {
@@ -15,6 +18,7 @@ pub mod macros {
         }
     }
 
+    /// Create a statically borrowed [`Cow`] [`Vec`].
     #[macro_export]
     macro_rules! borrowed_cow_vec {
         () => {
