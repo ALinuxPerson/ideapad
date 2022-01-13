@@ -37,6 +37,7 @@ pub enum Error {
 /// Controller for battery conservation mode.
 #[derive(Debug, Copy, Clone, Ord, PartialOrd, Eq, PartialEq, Hash)]
 pub struct BatteryConservationController<'p> {
+    /// Reference to the profile.
     pub profile: &'p Profile,
 }
 

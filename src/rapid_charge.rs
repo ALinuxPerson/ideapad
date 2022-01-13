@@ -33,6 +33,7 @@ pub enum Error {
 /// Controller for rapid charge.
 #[derive(Debug, Clone, Ord, PartialOrd, Eq, PartialEq, Hash)]
 pub struct RapidChargeController<'p> {
+    /// Reference to the profile.
     pub profile: &'p Profile,
 }
 
