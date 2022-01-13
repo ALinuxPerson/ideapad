@@ -1,3 +1,11 @@
+//! Basic wrapper for the `acpi_call` kernel module.
+//!
+//! Only exposed for [`Result`] and [`Error`].
+//!
+//! `acpi_call` support is very basic; there is no verification of commands, the only supported data
+//! type for parameters is [`u32`], and the only output from `acpi_call` which is considered valid
+//! are [`u32`]s. Regardless, these features are enough for this crate.
+
 use std::{fs, io, iter};
 use std::borrow::Cow;
 use tap::Pipe;
@@ -5,24 +13,45 @@ use thiserror::Error;
 
 const PATH: &str = "/proc/acpi/call";
 
+/// Handy wrapper for [`Error`].
 pub type Result<T> = std::result::Result<T, Error>;
 
+/// Bad things which could happen when using `acpi_call`.
 #[derive(Debug, Error)]
 pub enum Error {
+    /// The `acpi_call` kernel module is not available or not loaded.
     #[error("`acpi_call` kernel module not loaded")]
-    KernelModuleNotLoaded { source: io::Error },
+    KernelModuleNotLoaded {
+        /// The source of the error. Usually an [`io::ErrorKind::NotFound`] is the kind of
+        /// [`io::Error`].
+        source: io::Error
+    },
 
+    /// An unknown value was returned from `acpi_call`.
     #[error("unknown or unsupported value returned from `acpi_call`: '{value}'")]
-    UnknownValue { value: String },
+    UnknownValue {
+        /// The value which was returned.
+        value: String
+    },
 
+    /// An unknown error was returned from `acpi_call`.
     #[error("unknown error returned from `acpi_call`: {message}")]
-    UnknownError { message: String },
+    UnknownError {
+        /// The error message which was returned.
+        message: String
+    },
 
+    /// A method wasn't found in the ACPI table.
     #[error("method '{method}' not found in acpi table")]
-    MethodNotFound { method: String },
+    MethodNotFound {
+        /// The unknown ACPI method.
+        method: String
+    },
 
+    /// A generic IO error happened when using `acpi_call`.
     #[error("{error}")]
     Io {
+        /// The error itself.
         #[from]
         error: io::Error,
     },
