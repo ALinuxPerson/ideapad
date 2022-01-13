@@ -29,13 +29,13 @@ impl<'p> RapidChargeController<'p> {
 
     pub fn enable_with_handler(&self, handler: Handler) -> Result<()> {
         match handler {
-            Handler::Ignore => self.enable_unchecked().map_err(Into::into),
-            Handler::Error => self.enable_strict(),
-            Handler::Switch => self.enable().map_err(Into::into),
+            Handler::Ignore => self.enable_ignore().map_err(Into::into),
+            Handler::Error => self.enable_error(),
+            Handler::Switch => self.enable_switch().map_err(Into::into),
         }
     }
 
-    pub fn enable_unchecked(&self) -> acpi_call::Result<()> {
+    pub fn enable_ignore(&self) -> acpi_call::Result<()> {
         acpi_call(
                 self.profile.battery.set_command.to_string(),
             [self.profile.battery.rapid_charge.parameters.enable],
@@ -44,22 +44,22 @@ impl<'p> RapidChargeController<'p> {
         Ok(())
     }
 
-    pub fn enable_strict(&self) -> Result<()> {
+    pub fn enable_error(&self) -> Result<()> {
         if self.profile.battery_conservation().enabled()? {
             Err(Error::BatteryConservationEnabled)
         } else {
-            self.enable_unchecked().map_err(Into::into)
+            self.enable_ignore().map_err(Into::into)
         }
     }
 
-    pub fn enable(&self) -> acpi_call::Result<()> {
+    pub fn enable_switch(&self) -> acpi_call::Result<()> {
         let battery_conservation = self.profile.battery_conservation();
 
         if battery_conservation.enabled()? {
             battery_conservation.disable()?
         }
 
-        self.enable_unchecked()
+        self.enable_ignore()
     }
 
     pub fn disable(&self) -> acpi_call::Result<()> {
@@ -93,16 +93,16 @@ pub fn enable_with_handler(handler: Handler) -> Result<()> {
     Profile::get().rapid_charge().enable_with_handler(handler)
 }
 
-pub fn enable() -> acpi_call::Result<()> {
-    Profile::get().rapid_charge().enable()
+pub fn enbale_switch() -> acpi_call::Result<()> {
+    Profile::get().rapid_charge().enable_switch()
 }
 
-pub fn enable_unchecked() -> acpi_call::Result<()> {
-    Profile::get().rapid_charge().enable_unchecked()
+pub fn enable_ignore() -> acpi_call::Result<()> {
+    Profile::get().rapid_charge().enable_ignore()
 }
 
-pub fn enable_strict() -> Result<()> {
-    Profile::get().rapid_charge().enable_strict()
+pub fn enable_error() -> Result<()> {
+    Profile::get().rapid_charge().enable_error()
 }
 
 pub fn disable() -> acpi_call::Result<()> {
@@ -127,13 +127,13 @@ mod tests {
     fn test_enable_with_handler() { todo!() }
 
     #[cfg(test)]
-    fn test_enable_unchecked() { todo!() }
+    fn test_enable_ignore() { todo!() }
 
     #[cfg(test)]
-    fn test_enable_strict() { todo!() }
+    fn test_enable_error() { todo!() }
 
     #[cfg(test)]
-    fn test_enable() { todo!() }
+    fn test_enable_switch() { todo!() }
 
     #[cfg(test)]
     fn test_disable() { todo!() }
