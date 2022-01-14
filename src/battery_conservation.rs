@@ -35,9 +35,7 @@ pub enum Error {
 }
 
 /// "Guarantees" that the battery conservation mode is enabled for the scope.
-///
-/// # Notes
-/// "Guarantees" is in quotes since any other thread can disable the mode at any time.
+#[derive(Debug, Ord, PartialOrd, Eq, PartialEq, Hash)]
 pub struct BatteryConservationEnableGuard<'bc, 'p> {
     controller: &'bc mut BatteryConservationController<'p>,
 }
