@@ -6,6 +6,7 @@
 //! conservation mode at. For example, if you charge your battery to 80% and then enable battery
 //! conservation mode, the battery level will be capped at 80%.
 
+use parking_lot::RwLockReadGuard;
 use crate::acpi_call::{self, acpi_call, acpi_call_expect_valid};
 use crate::profile::Profile;
 use crate::Handler;
@@ -34,30 +35,38 @@ pub enum Error {
     RapidChargeEnabled,
 }
 
+/// "Guarantees" that the battery conservation mode is enabled for the scope.
+///
+/// # Notes
+/// "Guarantees" is in quotes since any other thread can disable the mode at any time.
 pub struct BatteryConservationEnableGuard<'bc, 'p> {
-    controller: &'bc BatteryConservationController<'p>,
+    controller: &'bc mut BatteryConservationController<'p>,
 }
 
 impl<'bc, 'p> BatteryConservationEnableGuard<'bc, 'p> {
-    pub fn handler(controller: &'bc BatteryConservationController<'p>, handler: Handler) -> Result<Self> {
+    /// Enable battery conservation mode for the scope with the specified handler.
+    pub fn handler(controller: &'bc mut BatteryConservationController<'p>, handler: Handler) -> Result<Self> {
         controller.enable_with_handler(handler)?;
 
         Ok(Self { controller })
     }
 
-    pub fn ignore(controller: &'bc BatteryConservationController<'p>) -> acpi_call::Result<Self> {
+    /// Enable battery conservation mode for the scope with the ignore handler.
+    pub fn ignore(controller: &'bc mut BatteryConservationController<'p>) -> acpi_call::Result<Self> {
         controller.enable_ignore()?;
 
         Ok(Self { controller })
     }
 
-    pub fn error(controller: &'bc BatteryConservationController<'p>) -> Result<Self> {
+    /// Enable battery conservation mode for the scope with the error handler.
+    pub fn error(controller: &'bc mut BatteryConservationController<'p>) -> Result<Self> {
         controller.enable_error()?;
 
         Ok(Self { controller })
     }
 
-    pub fn r#switch(controller: &'bc BatteryConservationController<'p>) -> acpi_call::Result<Self> {
+    /// Enable battery conservation mode for the scope with the switch handler.
+    pub fn r#switch(controller: &'bc mut BatteryConservationController<'p>) -> acpi_call::Result<Self> {
         controller.enable_switch()?;
 
         Ok(Self { controller })
@@ -86,7 +95,7 @@ impl<'p> BatteryConservationController<'p> {
     /// Enable battery conservation with the specified [`Handler`].
     ///
     /// For more information on what do the [`Handler`]s mean, see the [`Handler`] documentation.
-    pub fn enable_with_handler(&self, handler: Handler) -> Result<()> {
+    pub fn enable_with_handler(&mut self, handler: Handler) -> Result<()> {
         match handler {
             Handler::Ignore => self.enable_ignore().map_err(Into::into),
             Handler::Error => self.enable_error(),
@@ -98,7 +107,7 @@ impl<'p> BatteryConservationController<'p> {
     ///
     /// # Note
     /// Using this could drain your battery unnecessarily if rapid charge is enabled. Be careful!
-    pub fn enable_ignore(&self) -> acpi_call::Result<()> {
+    pub fn enable_ignore(&mut self) -> acpi_call::Result<()> {
         acpi_call(
             self.profile.battery.set_command.to_string(),
             [self.profile.battery.conservation.parameters.enable],
@@ -109,7 +118,7 @@ impl<'p> BatteryConservationController<'p> {
 
     /// Enable battery conservation, returning an [`Error::RapidChargeEnabled`] if rapid charge is
     /// already enabled.
-    pub fn enable_error(&self) -> Result<()> {
+    pub fn enable_error(&mut self) -> Result<()> {
         if self.profile.rapid_charge().enabled()? {
             Err(Error::RapidChargeEnabled)
         } else {
@@ -118,7 +127,7 @@ impl<'p> BatteryConservationController<'p> {
     }
 
     /// Enable battery conservation, switching off rapid charge if it is enabled.
-    pub fn enable_switch(&self) -> acpi_call::Result<()> {
+    pub fn enable_switch(&mut self) -> acpi_call::Result<()> {
         let rapid_charge = self.profile.rapid_charge();
 
         if rapid_charge.enabled()? {
@@ -129,7 +138,7 @@ impl<'p> BatteryConservationController<'p> {
     }
 
     /// Disable battery conservation.
-    pub fn disable(&self) -> acpi_call::Result<()> {
+    pub fn disable(&mut self) -> acpi_call::Result<()> {
         acpi_call(
             self.profile.battery.set_command.to_string(),
             [self.profile.battery.conservation.parameters.disable],
@@ -157,6 +166,10 @@ impl<'p> BatteryConservationController<'p> {
     /// Check if battery conservation is disabled.
     pub fn disabled(&self) -> acpi_call::Result<bool> {
         self.get().map(|enabled| !enabled)
+    }
+
+    pub fn enable_guard<'bc>(&'bc mut self, handler: Handler) -> Result<BatteryConservationEnableGuard<'bc, 'p>> {
+        BatteryConservationEnableGuard::handler(self, handler)
     }
 }
 
