@@ -216,12 +216,28 @@ mod tests {
     }
 
     #[test]
+    #[serial]
     fn test_enable_ignore() {
-        todo!()
+        crate::initialize().expect("initialization failed");
+
+        battery_conservation::enable_ignore().expect("battery conservation enable failed");
+        rapid_charge::enable_ignore().expect("rapid charge enable failed");
+
+        assert!(
+            rapid_charge::enabled().expect("failed to get rapid charge status"),
+            "expected rapid charge to be enabled with the ignore handler",
+        );
+
+        assert!(
+            battery_conservation::disabled().expect("failed to get battery conservation status"),
+            "expected battery conservation to be disabled with the ignore handler",
+        );
     }
 
     #[test]
-    fn test_enable_error() { todo!() }
+    fn test_enable_error() {
+        todo!()
+    }
 
     #[test]
     fn test_enable_switch() { todo!() }
