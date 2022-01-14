@@ -5,6 +5,7 @@
 use crate::acpi_call::{self, acpi_call, acpi_call_expect_valid};
 use crate::profile::{Profile, SystemPerformanceBits, SystemPerformanceParameters};
 use thiserror::Error;
+use crate::Handler;
 
 /// Handy wrapper for [`Error`].
 pub type Result<T, E = Error> = std::result::Result<T, E>;
@@ -119,6 +120,29 @@ impl SystemPerformanceMode {
     }
 }
 
+#[derive(Debug, Ord, PartialOrd, Eq, PartialEq, Hash)]
+#[must_use]
+pub struct SystemPerformanceGuard<'sp, 'p> {
+    pub controller: &'sp mut SystemPerformanceController<'p>,
+    pub on_drop: SystemPerformanceMode,
+}
+
+impl<'sp, 'p> SystemPerformanceGuard<'sp, 'p> {
+    pub fn new(controller: &'sp mut SystemPerformanceController<'p>, on_init: SystemPerformanceMode, on_drop: SystemPerformanceMode) -> acpi_call::Result<Self> {
+        controller.set(on_init)?;
+        Ok(Self {
+            controller,
+            on_drop,
+        })
+    }
+}
+
+impl<'sp, 'p> Drop for SystemPerformanceGuard<'sp, 'p> {
+    fn drop(&mut self) {
+        crate::fallible_drop_strategy::handle_error(|| self.controller.set(self.on_drop))
+    }
+}
+
 /// Controller for the system performance mode.
 #[derive(Debug, Copy, Clone, Ord, PartialOrd, Eq, PartialEq, Hash)]
 pub struct SystemPerformanceController<'p> {
@@ -165,6 +189,10 @@ impl<'p> SystemPerformanceController<'p> {
         // we have proven that system performance mode values are the same at this point, so just
         // return the spmo bit
         Ok(spm_spmo)
+    }
+
+    pub fn guard<'sp>(&'sp mut self, on_init: SystemPerformanceMode, on_drop: SystemPerformanceMode) -> acpi_call::Result<SystemPerformanceGuard<'sp, 'p>> {
+        SystemPerformanceGuard::new(self, on_init, on_drop)
     }
 }
 
