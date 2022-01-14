@@ -66,7 +66,7 @@ impl<'bc, 'p> BatteryConservationEnableGuard<'bc, 'p> {
 
 impl<'bc, 'p> Drop for BatteryConservationEnableGuard<'bc, 'p> {
     fn drop(&mut self) {
-        self.controller.disable();
+        crate::fallible_drop_strategy::handle_error(|| self.controller.disable())
     }
 }
 
