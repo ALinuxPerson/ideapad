@@ -76,6 +76,28 @@ impl<'bc, 'p> Drop for BatteryConservationEnableGuard<'bc, 'p> {
     }
 }
 
+/// "Guarantees" that the battery conservation mode is disabled for the scope.
+#[derive(Debug, Ord, PartialOrd, Eq, PartialEq, Hash)]
+pub struct BatteryConservationDisableGuard<'bc, 'p> {
+    controller: &'bc mut BatteryConservationController<'p>,
+    handler: Handler,
+}
+
+impl<'bc, 'p> BatteryConservationDisableGuard<'bc, 'p> {
+    /// Disable battery conservation mode for the scope.
+    pub fn new(controller: &'bc mut BatteryConservationController<'p>, handler: Handler) -> acpi_call::Result<Self> {
+        controller.disable()?;
+
+        Ok(Self { controller, handler })
+    }
+}
+
+impl<'bc, 'p> Drop for BatteryConservationDisableGuard<'bc, 'p> {
+    fn drop(&mut self) {
+        crate::fallible_drop_strategy::handle_error(|| self.controller.enable_with_handler(self.handler))
+    }
+}
+
 /// Controller for battery conservation mode.
 #[derive(Debug, Copy, Clone, Ord, PartialOrd, Eq, PartialEq, Hash)]
 pub struct BatteryConservationController<'p> {
@@ -167,6 +189,10 @@ impl<'p> BatteryConservationController<'p> {
 
     pub fn enable_guard<'bc>(&'bc mut self, handler: Handler) -> Result<BatteryConservationEnableGuard<'bc, 'p>> {
         BatteryConservationEnableGuard::handler(self, handler)
+    }
+
+    pub fn disable_guard<'bc>(&'bc mut self, handler: Handler) -> acpi_call::Result<BatteryConservationDisableGuard<'bc, 'p>> {
+        BatteryConservationDisableGuard::new(self, handler)
     }
 }
 
