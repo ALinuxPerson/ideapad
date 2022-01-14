@@ -34,6 +34,42 @@ pub enum Error {
     RapidChargeEnabled,
 }
 
+pub struct BatteryConservationEnableGuard<'bc, 'p> {
+    controller: &'bc BatteryConservationController<'p>,
+}
+
+impl<'bc, 'p> BatteryConservationEnableGuard<'bc, 'p> {
+    pub fn handler(controller: &'bc BatteryConservationController<'p>, handler: Handler) -> Result<Self> {
+        controller.enable_with_handler(handler)?;
+
+        Ok(Self { controller })
+    }
+
+    pub fn ignore(controller: &'bc BatteryConservationController<'p>) -> acpi_call::Result<Self> {
+        controller.enable_ignore()?;
+
+        Ok(Self { controller })
+    }
+
+    pub fn error(controller: &'bc BatteryConservationController<'p>) -> Result<Self> {
+        controller.enable_error()?;
+
+        Ok(Self { controller })
+    }
+
+    pub fn r#switch(controller: &'bc BatteryConservationController<'p>) -> acpi_call::Result<Self> {
+        controller.enable_switch()?;
+
+        Ok(Self { controller })
+    }
+}
+
+impl<'bc, 'p> Drop for BatteryConservationEnableGuard<'bc, 'p> {
+    fn drop(&mut self) {
+        self.controller.disable();
+    }
+}
+
 /// Controller for battery conservation mode.
 #[derive(Debug, Copy, Clone, Ord, PartialOrd, Eq, PartialEq, Hash)]
 pub struct BatteryConservationController<'p> {
