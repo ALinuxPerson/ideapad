@@ -133,7 +133,7 @@ impl<'p> SystemPerformanceController<'p> {
     }
 
     /// Set the system performance mode to the specified mode.
-    pub fn set(&self, mode: SystemPerformanceMode) -> acpi_call::Result<()> {
+    pub fn set(&mut self, mode: SystemPerformanceMode) -> acpi_call::Result<()> {
         acpi_call(
             self.profile.system_performance.commands.set.to_string(),
             [mode.setter(&self.profile.system_performance.parameters)],
