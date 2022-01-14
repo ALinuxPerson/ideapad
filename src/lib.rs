@@ -19,6 +19,9 @@ pub mod profile;
 pub mod rapid_charge;
 pub mod system_performance;
 
+#[cfg(test)]
+mod battery_conservation_rapid_charge_shared_tests;
+
 pub use prelude::*;
 
 #[cfg(not(target_os = "linux"))]
