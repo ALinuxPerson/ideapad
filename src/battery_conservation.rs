@@ -171,27 +171,70 @@ pub fn disabled() -> acpi_call::Result<bool> {
 
 #[cfg(test)]
 mod tests {
-    #[cfg(test)]
-    fn test_enable_with_handler() { todo!() }
+    use crate::{battery_conservation, Handler, rapid_charge};
 
-    #[cfg(test)]
-    fn test_enable_ignore() { todo!() }
+    #[test]
+    #[serial]
+    fn test_enable_with_handler() {
+        crate::initialize().expect("initialization failed");
 
-    #[cfg(test)]
+        // set up our scenario here
+        battery_conservation::enable_with_handler(Handler::Ignore)
+            .expect("battery conservation enable failed");
+
+        // let's test first with ignorance
+        rapid_charge::enable_with_handler(Handler::Ignore)
+            .expect("rapid charge enable failed");
+
+        assert!(
+            rapid_charge::enabled().expect("failed to get rapid charge status"),
+            "expected rapid charge to be enabled with the ignore handler",
+        );
+
+        // TIL ideapad laptops already have a built in mechanism to switch off rapid charging when
+        // trying to enable battery conservation, albeit this is easily bypassed by just switching
+        // on battery conservation again afterwards, sooo we still need the switch handler
+        assert!(
+            battery_conservation::disabled().expect("failed to get battery conservation status"),
+            "expected battery conservation to be disabled with the ignore handler",
+        );
+
+        // now let's test with an error handler
+        battery_conservation::enable_with_handler(Handler::Ignore)
+            .expect("battery conservation enable failed");
+
+        let error = rapid_charge::enable_with_handler(Handler::Error)
+            .expect_err("rapid charge enable succeeded");
+        assert!(matches!(error, rapid_charge::Error::BatteryConservationEnabled));
+        assert!(battery_conservation::enabled().expect("failed to get battery conservation status"));
+
+        // now let's test with a switch handler
+        rapid_charge::enable_with_handler(Handler::Switch)
+            .expect("rapid charge enable failed");
+        assert!(rapid_charge::enabled().expect("failed to get rapid charge status"));
+        assert!(battery_conservation::disabled().expect("failed to get battery conservation status"));
+    }
+
+    #[test]
+    fn test_enable_ignore() {
+        todo!()
+    }
+
+    #[test]
     fn test_enable_error() { todo!() }
 
-    #[cfg(test)]
+    #[test]
     fn test_enable_switch() { todo!() }
 
-    #[cfg(test)]
+    #[test]
     fn test_disable() { todo!() }
 
-    #[cfg(test)]
+    #[test]
     fn test_get() { todo!() }
 
-    #[cfg(test)]
+    #[test]
     fn test_enabled() { todo!() }
 
-    #[cfg(test)]
+    #[test]
     fn test_disabled() { todo!() }
 }

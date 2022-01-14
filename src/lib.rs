@@ -1,5 +1,10 @@
 #![doc = include_str!("../README.md")]
 #![warn(missing_docs)]
+
+#[cfg(test)]
+#[macro_use]
+extern crate serial_test;
+
 #[cfg(feature = "serde")]
 #[macro_use]
 extern crate serde;

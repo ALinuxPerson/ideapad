@@ -14,3 +14,6 @@ tap = "1.0.1"
 thiserror = "1.0.30"
 
 [features]
+
+[dev-dependencies]
+serial_test = "0.5.1"
