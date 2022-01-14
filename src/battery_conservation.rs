@@ -6,7 +6,6 @@
 //! conservation mode at. For example, if you charge your battery to 80% and then enable battery
 //! conservation mode, the battery level will be capped at 80%.
 
-use parking_lot::RwLockReadGuard;
 use crate::acpi_call::{self, acpi_call, acpi_call_expect_valid};
 use crate::profile::Profile;
 use crate::Handler;
@@ -128,7 +127,7 @@ impl<'p> BatteryConservationController<'p> {
 
     /// Enable battery conservation, switching off rapid charge if it is enabled.
     pub fn enable_switch(&mut self) -> acpi_call::Result<()> {
-        let rapid_charge = self.profile.rapid_charge();
+        let mut rapid_charge = self.profile.rapid_charge();
 
         if rapid_charge.enabled()? {
             rapid_charge.disable()?;
