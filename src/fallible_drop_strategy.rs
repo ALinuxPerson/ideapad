@@ -2,6 +2,15 @@
 //!
 //! These are strategies that deal with how to go on when an error occurs in a [`Drop`]
 //! implementation, usually in guard structures.
+//!
+//! The default fallible drop strategy is to log the error to the standard error stream.
+//!
+//! The following fallible drop strategies are available:
+//!  * Logging to the standard error stream.
+//!  * Logging to the standard output stream.
+//!  * Logging to a specified writer.
+//!  * Panic.
+//!  * Do nothing/ignore the error.
 
 use std::error::Error;
 use std::{io, process};
