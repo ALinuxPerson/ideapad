@@ -11,6 +11,9 @@
 //!  * Logging to a specified writer.
 //!  * Panic.
 //!  * Do nothing/ignore the error.
+//!
+//! You may also implement your own fallible drop strategy and set it as the global drop strategy
+//! via the [`FallibleDropStrategy`] trait and the [`set`] method.
 
 use std::error::Error;
 use std::{io, process};
@@ -112,9 +115,10 @@ impl FallibleDropStrategy for DoNothingOnError {
     fn on_error<E: Error>(&self, _error: E) {}
 }
 
-fn set<T>(strategy: T)
+/// Set the global fallible drop strategy to the specified `strategy`.
+pub fn set<T>(strategy: T)
     where
-        T: DynFallibleDropStrategy,
+        T: FallibleDropStrategy,
         T: 'static,
 {
     fn inner(strategy: Box<dyn DynFallibleDropStrategy>) {
