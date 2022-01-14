@@ -77,6 +77,16 @@ pub(crate) fn on_error<E: Error>(error: E) {
     inner(&error)
 }
 
+pub(crate) fn handle_error<E, F>(f: F)
+where
+    F: FnOnce() -> Result<(), E>,
+    E: Error,
+{
+    if let Err(error) = f() {
+        on_error(error)
+    }
+}
+
 struct ExitOnError {
     exit_code: i32,
 }
