@@ -46,7 +46,7 @@ impl<'p> RapidChargeController<'p> {
     /// Enable rapid charge with the specified [`Handler`].
     ///
     /// For more information on what do the [`Handler`]s mean, see the [`Handler`] documentation.
-    pub fn enable_with_handler(&self, handler: Handler) -> Result<()> {
+    pub fn enable_with_handler(&mut self, handler: Handler) -> Result<()> {
         match handler {
             Handler::Ignore => self.enable_ignore().map_err(Into::into),
             Handler::Error => self.enable_error(),
@@ -59,7 +59,7 @@ impl<'p> RapidChargeController<'p> {
     /// # Note
     /// Using this could drain your battery unnecessarily if battery conservation is enabled. Be
     /// careful!
-    pub fn enable_ignore(&self) -> acpi_call::Result<()> {
+    pub fn enable_ignore(&mut self) -> acpi_call::Result<()> {
         acpi_call(
                 self.profile.battery.set_command.to_string(),
             [self.profile.battery.rapid_charge.parameters.enable],
@@ -70,7 +70,7 @@ impl<'p> RapidChargeController<'p> {
 
     /// Enable battery conservation, returning an [`Error::BatteryConservationEnabled`] if rapid
     /// charge is already enabled.
-    pub fn enable_error(&self) -> Result<()> {
+    pub fn enable_error(&mut self) -> Result<()> {
         if self.profile.battery_conservation().enabled()? {
             Err(Error::BatteryConservationEnabled)
         } else {
@@ -79,8 +79,8 @@ impl<'p> RapidChargeController<'p> {
     }
 
     /// Enable rapid charge, switching off battery conservation if it is enabled.
-    pub fn enable_switch(&self) -> acpi_call::Result<()> {
-        let battery_conservation = self.profile.battery_conservation();
+    pub fn enable_switch(&mut self) -> acpi_call::Result<()> {
+        let mut battery_conservation = self.profile.battery_conservation();
 
         if battery_conservation.enabled()? {
             battery_conservation.disable()?
@@ -90,7 +90,7 @@ impl<'p> RapidChargeController<'p> {
     }
 
     /// Disable rapid charge.
-    pub fn disable(&self) -> acpi_call::Result<()> {
+    pub fn disable(&mut self) -> acpi_call::Result<()> {
         acpi_call(
                 self.profile.battery.set_command.to_string(),
             [self.profile.battery.rapid_charge.parameters.disable],
