@@ -32,22 +32,28 @@ pub trait ThreadSafeWrite: ThreadSafe + Write {}
 impl<T: ThreadSafe + Write> ThreadSafeWrite for T {}
 
 /// Signifies that you can get an error from the implementing type.
-pub trait CouldHandleError<E: Error> {
-    fn get(self) -> Result<(), E>;
+pub trait CouldHandleError {
+    type Error: Error;
+
+    fn get(self) -> Result<(), Self::Error>;
 }
 
-impl<E: Error> CouldHandleError<E> for Result<(), E> {
-    fn get(self) -> Result<(), E> {
+impl<E: Error> CouldHandleError for Result<(), E> {
+    type Error = E;
+
+    fn get(self) -> Result<(), Self::Error> {
         self
     }
 }
 
-impl<F, E> CouldHandleError<E> for F
+impl<F, E> CouldHandleError for F
 where
     F: FnOnce() -> Result<(), E>,
     E: Error,
 {
-    fn get(self) -> Result<(), E> {
+    type Error = E;
+
+    fn get(self) -> Result<(), Self::Error> {
         self()
     }
 }
@@ -56,10 +62,7 @@ where
 pub trait FallibleDropStrategy: ThreadSafe {
     /// What to do on an error on a drop.
     fn on_error<E: Error>(&self, error: E);
-    fn handle_error<T, E>(&self, item: T)
-    where
-        T: CouldHandleError<E>,
-        E: Error,
+    fn handle_error<T: CouldHandleError>(&self, item: T)
     {
         if let Err(error) = item.get() {
             self.on_error(error)
