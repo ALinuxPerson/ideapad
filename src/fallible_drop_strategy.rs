@@ -149,11 +149,11 @@ impl Write for DynWriter {
     }
 }
 
-pub struct DynToGenericFallibleDropStrategyAdapter(pub Box<dyn DynFallibleDropStrategy>);
+pub struct DynToGenericFallibleDropStrategyAdapter<'a>(pub &'a dyn DynFallibleDropStrategy);
 
-impl FallibleDropStrategy for DynToGenericFallibleDropStrategyAdapter {
+impl<'a> FallibleDropStrategy for DynToGenericFallibleDropStrategyAdapter<'a> {
     fn on_error<E: Error>(&self, error: E) {
-        DynFallibleDropStrategy::on_error(self.0.deref(), &error)
+        DynFallibleDropStrategy::on_error(self.0, &error)
     }
 }
 
@@ -162,7 +162,7 @@ pub enum FallibleDropStrategies {
     PanicOnError(PanicOnError),
     ExitOnError(ExitOnError),
     DoNothingOnError(DoNothingOnError),
-    Custom(DynToGenericFallibleDropStrategyAdapter),
+    Custom(Box<dyn DynFallibleDropStrategy>),
 }
 
 impl FallibleDropStrategies {
@@ -201,7 +201,10 @@ impl DynFallibleDropStrategy for FallibleDropStrategies {
                 DynFallibleDropStrategy::on_error(strategy, error)
             }
             FallibleDropStrategies::Custom(strategy) => {
-                DynFallibleDropStrategy::on_error(strategy.deref(), error)
+                // this *should* incur no overhead at runtime since this just stores a reference to
+                // the dyn object
+                let strategy = DynToGenericFallibleDropStrategyAdapter(strategy.deref());
+                DynFallibleDropStrategy::on_error(&strategy, error)
             }
         }
     }
@@ -217,7 +220,7 @@ where
     T: FallibleDropStrategy,
     T: 'static,
 {
-    set_known(FallibleDropStrategies::Custom(DynToGenericFallibleDropStrategyAdapter(Box::new(strategy))))
+    set_known(FallibleDropStrategies::Custom(Box::new(strategy)))
 }
 
 /// Set the global [`FallibleDropStrategy`] to log to the specified writer on error.
