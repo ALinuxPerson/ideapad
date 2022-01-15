@@ -192,31 +192,6 @@ impl<'bc, 'p> BatteryConservationEnableGuard<'bc, 'p> {
 
         Ok(Self { controller })
     }
-
-    /// Enable battery conservation mode for the scope with the ignore handler.
-    pub fn ignore(
-        controller: &'bc mut BatteryConservationController<'p>,
-    ) -> acpi_call::Result<Self> {
-        controller.enable_ignore()?;
-
-        Ok(Self { controller })
-    }
-
-    /// Enable battery conservation mode for the scope with the error handler.
-    pub fn error(controller: &'bc mut BatteryConservationController<'p>) -> Result<Self> {
-        controller.enable_error()?;
-
-        Ok(Self { controller })
-    }
-
-    /// Enable battery conservation mode for the scope with the switch handler.
-    pub fn r#switch(
-        controller: &'bc mut BatteryConservationController<'p>,
-    ) -> acpi_call::Result<Self> {
-        controller.enable_switch()?;
-
-        Ok(Self { controller })
-    }
 }
 
 impl<'bc, 'p> Drop for BatteryConservationEnableGuard<'bc, 'p> {
