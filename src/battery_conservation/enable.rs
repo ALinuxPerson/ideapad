@@ -112,8 +112,8 @@ impl<'bc, 'p> EnableBatteryConservationBuilder<'bc, 'p, Call> {
 
 fn enable_ignore(controller: &mut BatteryConservationController) -> acpi_call::Result<()> {
     acpi_call(
-        controller.profile.battery.set_command.to_string(),
-        [controller.profile.battery.conservation.parameters.enable],
+        controller.context.profile.battery.set_command.to_string(),
+        [controller.context.profile.battery.conservation.parameters.enable],
     )?;
 
     Ok(())
@@ -122,7 +122,7 @@ fn enable_ignore(controller: &mut BatteryConservationController) -> acpi_call::R
 /// Enable battery conservation, returning an [`Error::RapidChargeEnabled`] if rapid charge is
 /// already enabled.
 fn enable_error(controller: &mut BatteryConservationController) -> super::Result<()> {
-    if controller.profile.rapid_charge().enabled()? {
+    if controller.context.profile.rapid_charge().enabled()? {
         Err(super::Error::RapidChargeEnabled)
     } else {
         enable_ignore(controller).map_err(Into::into)
@@ -131,7 +131,7 @@ fn enable_error(controller: &mut BatteryConservationController) -> super::Result
 
 /// Enable battery conservation, switching off rapid charge if it is enabled.
 fn enable_switch(controller: &mut BatteryConservationController) -> acpi_call::Result<()> {
-    let mut rapid_charge = controller.profile.rapid_charge();
+    let mut rapid_charge = controller.context.profile.rapid_charge();
 
     if rapid_charge.enabled()? {
         rapid_charge.disable()?;
