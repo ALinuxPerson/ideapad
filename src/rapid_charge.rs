@@ -6,6 +6,9 @@ use crate::acpi_call::{self, acpi_call, acpi_call_expect_valid};
 use crate::context::Context;
 use crate::Handler;
 use thiserror::Error;
+use crate::battery::{BatteryController, BatteryEnableGuard};
+use crate::battery::enable::{Begin, EnableBuilder};
+use crate::fallible_drop_strategy::{FallibleDropStrategies, FallibleDropStrategy};
 
 /// Handy wrapper for [`Error`].
 pub type Result<T, E = Error> = std::result::Result<T, E>;
@@ -28,6 +31,33 @@ pub enum Error {
     /// [`RapidChargeController::enable_with_handler`] with [`Handler::Error`].
     #[error("battery conservation is enabled, disable it before enabling rapid charge")]
     BatteryConservationEnabled,
+}
+
+pub type EnableRapidChargeBuilder<'rc, 'ctx, S> = EnableBuilder<'rc, 'ctx, S, RapidChargeController<'ctx>>;
+
+pub struct RapidChargeEnableGuard<'rc, 'ctx: 'rc> {
+    pub controller: &'rc mut RapidChargeController<'ctx>,
+}
+
+impl<'rc, 'ctx: 'rc> RapidChargeEnableGuard<'rc, 'ctx> {
+    fn fallible_drop_strategy(&self) -> &'ctx FallibleDropStrategies {
+        self.controller.context.fallible_drop_strategy()
+    }
+}
+
+impl<'rc, 'ctx: 'rc> Drop for RapidChargeEnableGuard<'rc, 'ctx> {
+    fn drop(&mut self) {
+        self.fallible_drop_strategy().handle_error(self.controller.disable())
+    }
+}
+
+impl<'rc, 'ctx: 'rc> BatteryEnableGuard<'rc, 'ctx, RapidChargeController<'ctx>> for RapidChargeEnableGuard<'rc, 'ctx> {
+    type Error = Error;
+
+    fn new(controller: &'rc mut RapidChargeController<'ctx>, handler: Handler) -> std::result::Result<Self, Self::Error> {
+        controller.enable().handler(handler).now()?;
+        Ok(Self { controller })
+    }
 }
 
 /// Controller for rapid charge.
@@ -53,44 +83,8 @@ impl<'ctx> RapidChargeController<'ctx> {
         }
     }
 
-    /// Enable rapid charge, ignoring if battery conservation is already enabled.
-    ///
-    /// # Note
-    /// Using this could drain your battery unnecessarily if battery conservation is enabled. Be
-    /// careful!
-    pub fn enable_ignore(&mut self) -> acpi_call::Result<()> {
-        acpi_call(
-            self.context.profile.battery.set_command.to_string(),
-            [self.context.profile.battery.rapid_charge.parameters.enable],
-        )?;
-
-        Ok(())
-    }
-
-    /// Enable battery conservation, returning an [`Error::BatteryConservationEnabled`] if rapid
-    /// charge is already enabled.
-    pub fn enable_error(&mut self) -> Result<()> {
-        if self
-            .context
-            .controllers()
-            .battery_conservation()
-            .enabled()?
-        {
-            Err(Error::BatteryConservationEnabled)
-        } else {
-            self.enable_ignore().map_err(Into::into)
-        }
-    }
-
-    /// Enable rapid charge, switching off battery conservation if it is enabled.
-    pub fn enable_switch(&mut self) -> acpi_call::Result<()> {
-        let mut battery_conservation = self.context.controllers().battery_conservation();
-
-        if battery_conservation.enabled()? {
-            battery_conservation.disable()?
-        }
-
-        self.enable_ignore()
+    pub fn enable<'rc>(&'rc mut self) -> EnableRapidChargeBuilder<'rc, 'ctx, Begin> {
+        EnableRapidChargeBuilder::new(self)
     }
 
     /// Disable rapid charge.
@@ -126,6 +120,43 @@ impl<'ctx> RapidChargeController<'ctx> {
     /// Check if rapid charge is disabled.
     pub fn disabled(&self) -> acpi_call::Result<bool> {
         self.get().map(|enabled| !enabled)
+    }
+}
+
+impl<'this, 'ctx: 'this> BatteryController<'this, 'ctx> for RapidChargeController<'ctx> {
+    type EnableGuard = RapidChargeEnableGuard<'this, 'ctx>;
+    type EnableError = Error;
+
+    fn enable_ignore(&mut self) -> acpi_call::Result<()> {
+        acpi_call(
+            self.context.profile.battery.set_command.to_string(),
+            [self.context.profile.battery.rapid_charge.parameters.enable],
+        )?;
+
+        Ok(())
+    }
+
+    fn enable_error(&mut self) -> std::result::Result<(), Self::EnableError> {
+        if self
+            .context
+            .controllers()
+            .battery_conservation()
+            .enabled()?
+        {
+            Err(Error::BatteryConservationEnabled)
+        } else {
+            self.enable_ignore().map_err(Into::into)
+        }
+    }
+
+    fn enable_switch(&mut self) -> acpi_call::Result<()> {
+        let mut battery_conservation = self.context.controllers().battery_conservation();
+
+        if battery_conservation.enabled()? {
+            battery_conservation.disable()?
+        }
+
+        self.enable_ignore()
     }
 }
 
