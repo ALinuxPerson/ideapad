@@ -33,10 +33,14 @@ pub enum Error {
     BatteryConservationEnabled,
 }
 
+/// Builder for enabling rapid charge.
 pub type EnableRapidChargeBuilder<'rc, 'ctx, S> =
     EnableBuilder<'rc, 'ctx, S, RapidChargeController<'ctx>>;
 
+/// Guarantees that rapid charge is enabled for the scope
+/// (excluding external access to `/proc/acpi/call`).
 pub struct RapidChargeEnableGuard<'rc, 'ctx: 'rc> {
+    /// Reference to the rapid charge controller.
     pub controller: &'rc mut RapidChargeController<'ctx>,
 }
 
@@ -70,6 +74,7 @@ impl<'rc, 'ctx: 'rc> BatteryEnableGuard<'rc, 'ctx, RapidChargeController<'ctx>>
 /// Controller for rapid charge.
 #[derive(Copy, Clone)]
 pub struct RapidChargeController<'ctx> {
+    /// Reference to the context.
     pub context: &'ctx Context,
 }
 
@@ -90,6 +95,7 @@ impl<'ctx> RapidChargeController<'ctx> {
         }
     }
 
+    /// Builder for enabling rapid charge.
     pub fn enable<'rc>(&'rc mut self) -> EnableRapidChargeBuilder<'rc, 'ctx, Begin> {
         EnableRapidChargeBuilder::new(self)
     }
