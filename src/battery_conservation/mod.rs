@@ -236,14 +236,21 @@ pub fn disabled(context: &Context) -> acpi_call::Result<bool> {
 
 #[cfg(test)]
 mod tests {
-    use crate::{battery_conservation, rapid_charge, Handler};
+    use once_cell::sync::Lazy;
+    use crate::{battery_conservation, rapid_charge, Handler, Context};
+
+    static CONTEXT: Lazy<Context> = Lazy::new(|| crate::context().expect("failed to get context"));
+
+    fn context() -> &'static Context {
+        &CONTEXT
+    }
 
     #[test]
     #[serial]
     fn test_enable_with_handler() {
-        let profile = crate::initialize().expect("initialization failed");
-        let mut battery_conservation = profile.battery_conservation();
-        let mut rapid_charge = profile.rapid_charge();
+        let controllers = context().controllers();
+        let mut battery_conservation = controllers.battery_conservation();
+        let mut rapid_charge = controllers.rapid_charge();
 
         // set up our scenario here
         battery_conservation
@@ -307,17 +314,20 @@ mod tests {
     #[test]
     #[serial]
     fn test_enable_ignore() {
-        let profile = crate::initialize().expect("initialization failed");
-        let mut battery_conservation = profile.battery_conservation();
-        let mut rapid_charge = profile.rapid_charge();
+        let controllers = context().controllers();
+        let mut battery_conservation = controllers.battery_conservation();
+        let mut rapid_charge = controllers.rapid_charge();
 
         battery_conservation
             .enable()
             .ignore()
             .now()
             .expect("battery conservation enable failed");
+
         rapid_charge
-            .enable_ignore()
+            .enable()
+            .ignore()
+            .now()
             .expect("rapid charge enable failed");
 
         assert!(
