@@ -2,9 +2,9 @@ mod private {
     pub trait Sealed {}
 }
 
-use crate::{BatteryConservationController, Handler};
-use crate::acpi_call::{acpi_call, self};
+use crate::acpi_call::{self, acpi_call};
 use crate::battery_conservation::BatteryConservationEnableGuard;
+use crate::{BatteryConservationController, Handler};
 
 /// A stage for the battery conservation enable builder.
 pub trait Stage: private::Sealed {}
@@ -13,7 +13,7 @@ pub trait Stage: private::Sealed {}
 ///
 /// This stage is where you specify the handler.
 pub struct Begin {
-    _priv: ()
+    _priv: (),
 }
 
 impl Stage for Begin {}
@@ -44,7 +44,10 @@ pub struct EnableBatteryConservationBuilder<'bc, 'ctx, S: Stage> {
 impl<'bc, 'ctx> EnableBatteryConservationBuilder<'bc, 'ctx, Begin> {
     /// Create a new builder for enabling battery conservation.
     pub fn new(controller: &'bc mut BatteryConservationController<'ctx>) -> Self {
-        Self { controller, stage: Begin { _priv: () } }
+        Self {
+            controller,
+            stage: Begin { _priv: () },
+        }
     }
 
     /// Enable battery conservation with the specified [`Handler`].
@@ -53,7 +56,7 @@ impl<'bc, 'ctx> EnableBatteryConservationBuilder<'bc, 'ctx, Begin> {
     pub fn handler(self, handler: Handler) -> EnableBatteryConservationBuilder<'bc, 'ctx, Call> {
         EnableBatteryConservationBuilder {
             controller: self.controller,
-            stage: Call { handler }
+            stage: Call { handler },
         }
     }
 
@@ -113,7 +116,13 @@ impl<'bc, 'ctx> EnableBatteryConservationBuilder<'bc, 'ctx, Call> {
 fn enable_ignore(controller: &mut BatteryConservationController) -> acpi_call::Result<()> {
     acpi_call(
         controller.context.profile.battery.set_command.to_string(),
-        [controller.context.profile.battery.conservation.parameters.enable],
+        [controller
+            .context
+            .profile
+            .battery
+            .conservation
+            .parameters
+            .enable],
     )?;
 
     Ok(())

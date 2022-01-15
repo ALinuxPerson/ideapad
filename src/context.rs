@@ -1,6 +1,8 @@
-use once_cell::sync::OnceCell;
 use crate::fallible_drop_strategy::FallibleDropStrategies;
-use crate::{BatteryConservationController, Profile, RapidChargeController, SystemPerformanceController};
+use crate::{
+    BatteryConservationController, Profile, RapidChargeController, SystemPerformanceController,
+};
+use once_cell::sync::OnceCell;
 
 #[derive(Copy, Clone)]
 pub struct Controllers<'ctx> {
@@ -38,22 +40,29 @@ impl Context {
         }
     }
 
-    pub fn with_fallible_drop_strategy(self, fallible_drop_strategy: FallibleDropStrategies) -> Self {
+    pub fn with_fallible_drop_strategy(
+        self,
+        fallible_drop_strategy: FallibleDropStrategies,
+    ) -> Self {
         let _ = self.fallible_drop_strategy.set(fallible_drop_strategy);
         self
     }
 
     pub fn fallible_drop_strategy(&self) -> &FallibleDropStrategies {
-        self.fallible_drop_strategy.get_or_init(FallibleDropStrategies::default)
+        self.fallible_drop_strategy
+            .get_or_init(FallibleDropStrategies::default)
     }
 
     pub fn fallible_drop_strategy_mut(&mut self) -> &mut FallibleDropStrategies {
         if self.fallible_drop_strategy.get().is_none() {
-            let _ = self.fallible_drop_strategy.set(FallibleDropStrategies::default());
+            let _ = self
+                .fallible_drop_strategy
+                .set(FallibleDropStrategies::default());
         }
 
-        self.fallible_drop_strategy.get_mut()
-            .expect("expected fallible drop strategy to already be initialized after initializing it")
+        self.fallible_drop_strategy.get_mut().expect(
+            "expected fallible drop strategy to already be initialized after initializing it",
+        )
     }
 
     pub const fn controllers(&self) -> Controllers {

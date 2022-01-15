@@ -3,11 +3,11 @@
 //! System performance (modes) are a variety of modes used to control the system performance.
 
 use crate::acpi_call::{self, acpi_call, acpi_call_expect_valid};
+use crate::context::Context;
+use crate::fallible_drop_strategy::{FallibleDropStrategies, FallibleDropStrategy};
 use crate::profile::{Profile, SystemPerformanceBits, SystemPerformanceParameters};
 use crate::Handler;
 use thiserror::Error;
-use crate::context::Context;
-use crate::fallible_drop_strategy::{FallibleDropStrategies, FallibleDropStrategy};
 
 /// Handy wrapper for [`Error`].
 pub type Result<T, E = Error> = std::result::Result<T, E>;
@@ -171,7 +171,12 @@ impl<'ctx> SystemPerformanceController<'ctx> {
     /// Set the system performance mode to the specified mode.
     pub fn set(&mut self, mode: SystemPerformanceMode) -> acpi_call::Result<()> {
         acpi_call(
-            self.context.profile.system_performance.commands.set.to_string(),
+            self.context
+                .profile
+                .system_performance
+                .commands
+                .set
+                .to_string(),
             [mode.setter(&self.context.profile.system_performance.parameters)],
         )?;
 

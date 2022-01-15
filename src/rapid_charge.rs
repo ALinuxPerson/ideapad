@@ -3,9 +3,9 @@
 //! Rapid charge charges your battery faster somehow.
 
 use crate::acpi_call::{self, acpi_call, acpi_call_expect_valid};
+use crate::context::Context;
 use crate::Handler;
 use thiserror::Error;
-use crate::context::Context;
 
 /// Handy wrapper for [`Error`].
 pub type Result<T, E = Error> = std::result::Result<T, E>;
@@ -70,7 +70,12 @@ impl<'ctx> RapidChargeController<'ctx> {
     /// Enable battery conservation, returning an [`Error::BatteryConservationEnabled`] if rapid
     /// charge is already enabled.
     pub fn enable_error(&mut self) -> Result<()> {
-        if self.context.controllers().battery_conservation().enabled()? {
+        if self
+            .context
+            .controllers()
+            .battery_conservation()
+            .enabled()?
+        {
             Err(Error::BatteryConservationEnabled)
         } else {
             self.enable_ignore().map_err(Into::into)
@@ -101,7 +106,12 @@ impl<'ctx> RapidChargeController<'ctx> {
     /// Get the rapid charge status.
     pub fn get(&self) -> acpi_call::Result<bool> {
         let output = acpi_call_expect_valid(
-            self.context.profile.battery.rapid_charge.get_command.to_string(),
+            self.context
+                .profile
+                .battery
+                .rapid_charge
+                .get_command
+                .to_string(),
             [],
         )?;
 
