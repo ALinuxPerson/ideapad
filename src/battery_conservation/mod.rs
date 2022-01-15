@@ -5,8 +5,6 @@
 //! disabled then enable it, the battery level will be capped at the level you enabled battery
 //! conservation mode at. For example, if you charge your battery to 80% and then enable battery
 //! conservation mode, the battery level will be capped at 80%.
-pub mod enable;
-
 use crate::acpi_call::{self, acpi_call, acpi_call_expect_valid};
 use crate::context::Context;
 use crate::fallible_drop_strategy::{
