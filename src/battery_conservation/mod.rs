@@ -49,16 +49,6 @@ pub struct BatteryConservationEnableGuard<'bc, 'ctx: 'bc> {
 }
 
 impl<'bc, 'ctx: 'bc> BatteryConservationEnableGuard<'bc, 'ctx> {
-    /// Enable battery conservation mode for the scope with the specified handler.
-    pub fn handler(
-        controller: &'bc mut BatteryConservationController<'ctx>,
-        handler: Handler,
-    ) -> Result<Self> {
-        controller.enable().handler(handler).now()?;
-
-        Ok(Self { controller })
-    }
-
     fn fallible_drop_strategy(&self) -> &'ctx FallibleDropStrategies {
         self.controller.context.fallible_drop_strategy()
     }
@@ -101,7 +91,9 @@ impl<'bc, 'ctx: 'bc> BatteryEnableGuard<'bc, 'ctx, BatteryConservationController
     type Error = Error;
 
     fn new(controller: &'bc mut BatteryConservationController<'ctx>, handler: Handler) -> Result<Self, Self::Error> {
-        Self::handler(controller, handler)
+        controller.enable().handler(handler).now()?;
+
+        Ok(Self { controller })
     }
 }
 
