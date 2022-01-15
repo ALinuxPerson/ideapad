@@ -39,13 +39,15 @@ impl private::Sealed for Call {}
 ///
 /// This is common between rapid charge and battery conservation.
 pub struct EnableBuilder<'ctrl, 'ctx: 'ctrl, S: Stage, C: BatteryController<'ctrl, 'ctx>> {
-    /// A reference to the controller.
+    /// A reference to the controller, whatever that may be.
     pub controller: &'ctrl mut C,
+
     stage: S,
     _marker: PhantomData<&'ctx Context>,
 }
 
 impl<'ctrl, 'ctx, C: BatteryController<'ctrl, 'ctx>> EnableBuilder<'ctrl, 'ctx, Begin, C> {
+    /// Start the process of enabling a battery mode.
     pub fn new(controller: &'ctrl mut C) -> Self {
         Self {
             controller,
@@ -54,6 +56,7 @@ impl<'ctrl, 'ctx, C: BatteryController<'ctrl, 'ctx>> EnableBuilder<'ctrl, 'ctx, 
         }
     }
 
+    /// Pick the handler, moving on to the next stage.
     pub fn handler(self, handler: Handler) -> EnableBuilder<'ctrl, 'ctx, Call, C> {
         EnableBuilder {
             controller: self.controller,
@@ -62,28 +65,35 @@ impl<'ctrl, 'ctx, C: BatteryController<'ctrl, 'ctx>> EnableBuilder<'ctrl, 'ctx, 
         }
     }
 
+    /// Pick the ignore handler, moving on to the next stage.
     pub fn ignore(self) -> EnableBuilder<'ctrl, 'ctx, Call, C> {
         self.handler(Handler::Ignore)
     }
 
+    /// Pick the error handler, moving on to the next stage.
     pub fn error(self) -> EnableBuilder<'ctrl, 'ctx, Call, C> {
         self.handler(Handler::Error)
     }
 
+    /// Pick the switch handler, moving on to the next stage.
     pub fn switch(self) -> EnableBuilder<'ctrl, 'ctx, Call, C> {
         self.handler(Handler::Switch)
     }
 }
 
 impl<'ctrl, 'ctx: 'ctrl, C: BatteryController<'ctrl, 'ctx>> EnableBuilder<'ctrl, 'ctx, Call, C> {
+    /// Get the handler from the previous stage.
     pub fn handler(&self) -> Handler {
         self.stage.handler
     }
 
+    /// Consume the builder, creating an enable guard from it.
     pub fn guard(self) -> Result<C::EnableGuard, <C::EnableGuard as BatteryEnableGuard<'ctrl, 'ctx, C>>::Error> {
         C::EnableGuard::new(self.controller, self.handler())
     }
 
+    /// Consume the builder, enabling the battery immediately with the handler that was specified
+    /// from the previous stage.
     pub fn now(self) -> Result<(), C::EnableError> {
         match self.handler() {
             Handler::Ignore => self.controller.enable_ignore().map_err(Into::into),
