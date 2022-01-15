@@ -1,6 +1,6 @@
 use once_cell::sync::OnceCell;
 use crate::fallible_drop_strategy::FallibleDropStrategies;
-use crate::Profile;
+use crate::{BatteryConservationController, Profile, RapidChargeController, SystemPerformanceController};
 
 pub struct Context {
     pub profile: Profile,
@@ -31,5 +31,20 @@ impl Context {
 
         self.fallible_drop_strategy.get_mut()
             .expect("expected fallible drop strategy to already be initialized after initializing it")
+    }
+
+    /// Return a battery conservation controller.
+    pub const fn battery_conservation(&self) -> BatteryConservationController {
+        BatteryConservationController::new(self)
+    }
+
+    /// Return a rapid charge controller.
+    pub const fn rapid_charge(&self) -> RapidChargeController {
+        RapidChargeController::new(self)
+    }
+
+    /// Return a system performance controller.
+    pub const fn system_performance(&self) -> SystemPerformanceController {
+        SystemPerformanceController::new(self)
     }
 }

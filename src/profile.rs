@@ -1,8 +1,5 @@
 //! An abstraction which allows this crate to be used on multiple Ideapad models.
 
-use crate::battery_conservation::BatteryConservationController;
-use crate::rapid_charge::RapidChargeController;
-use crate::SystemPerformanceController;
 use smbioslib::SMBiosSystemInformation;
 use std::borrow::Cow;
 use std::io;
@@ -564,21 +561,6 @@ impl Profile {
                     .contains(&Cow::Borrowed(product_name.as_str()))
             })
             .ok_or(Error::NoValidProfileInSearchPath)
-    }
-
-    /// Return a battery conservation controller.
-    pub const fn battery_conservation(&self) -> BatteryConservationController {
-        BatteryConservationController::new(self)
-    }
-
-    /// Return a rapid charge controller.
-    pub const fn rapid_charge(&self) -> RapidChargeController {
-        RapidChargeController::new(self)
-    }
-
-    /// Return a system performance controller.
-    pub const fn system_performance(&self) -> SystemPerformanceController {
-        SystemPerformanceController::new(self)
     }
 }
 
