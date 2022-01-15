@@ -149,6 +149,12 @@ impl<'sp, 'ctx> SystemPerformanceGuard<'sp, 'ctx> {
         })
     }
 
+    /// Set the new system performance mode for the scope, setting it back to the old system
+    /// performance mode when dropped.
+    pub fn for_this_scope(controller: &'sp mut SystemPerformanceController<'ctx>, mode: SystemPerformanceMode) -> Result<Self> {
+        Ok(Self::new(controller, mode, controller.get()?)?)
+    }
+
     fn fallible_drop_strategy(&self) -> &'ctx FallibleDropStrategies {
         self.controller.context.fallible_drop_strategy()
     }
