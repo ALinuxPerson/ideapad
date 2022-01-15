@@ -19,11 +19,14 @@ use once_cell::sync::Lazy;
 use parking_lot::{Mutex, RwLock};
 use std::error::Error;
 use std::io::Write;
-use std::{io, process};
 use std::ops::Deref;
+use std::{io, process};
 
-static DROP_STRATEGY: Lazy<RwLock<FallibleDropStrategies>> =
-    Lazy::new(|| RwLock::new(FallibleDropStrategies::LogToWriterOnError(LogToWriterOnError::new(DynWriter::Stderr(io::stderr())))));
+static DROP_STRATEGY: Lazy<RwLock<FallibleDropStrategies>> = Lazy::new(|| {
+    RwLock::new(FallibleDropStrategies::LogToWriterOnError(
+        LogToWriterOnError::new(DynWriter::Stderr(io::stderr())),
+    ))
+});
 
 /// Marker trait which indicates that the implementing type is thread safe.
 pub trait ThreadSafe: Send + Sync {}
@@ -188,17 +191,23 @@ where
     W: Write + ThreadSafe,
     W: 'static,
 {
-    set_known(FallibleDropStrategies::LogToWriterOnError(LogToWriterOnError::new(DynWriter::Custom(Box::new(writer)))))
+    set_known(FallibleDropStrategies::LogToWriterOnError(
+        LogToWriterOnError::new(DynWriter::Custom(Box::new(writer))),
+    ))
 }
 
 /// Set the global [`FallibleDropStrategy`] to log to standard output on error.
 pub fn log_to_stdout_on_error() {
-    set_known(FallibleDropStrategies::LogToWriterOnError(LogToWriterOnError::new(DynWriter::Stdout(io::stdout()))))
+    set_known(FallibleDropStrategies::LogToWriterOnError(
+        LogToWriterOnError::new(DynWriter::Stdout(io::stdout())),
+    ))
 }
 
 /// Set the global [`FallibleDropStrategy`] to log to standard error on error.
 pub fn log_to_stderr_on_error() {
-    set_known(FallibleDropStrategies::LogToWriterOnError(LogToWriterOnError::new(DynWriter::Stderr(io::stderr()))))
+    set_known(FallibleDropStrategies::LogToWriterOnError(
+        LogToWriterOnError::new(DynWriter::Stderr(io::stderr())),
+    ))
 }
 
 /// Set the global [`FallibleDropStrategy`] to panic on error.
@@ -208,7 +217,9 @@ pub fn panic_on_error() {
 
 /// Set the global [`FallibleDropStrategy`] to exit with the specified exit code on error.
 pub fn exit_with_code_on_error(exit_code: i32) {
-    set_known(FallibleDropStrategies::ExitOnError(ExitOnError { exit_code }))
+    set_known(FallibleDropStrategies::ExitOnError(ExitOnError {
+        exit_code,
+    }))
 }
 
 /// Set the global [`FallibleDropStrategy`] to exit on error.
