@@ -14,7 +14,7 @@ tap = "1.0.1"
 thiserror = "1.0.30"
 
 [features]
-default = ["core", "profiles"]
+default = ["core", "profiles", "macros"]
 
 # core
 core = ["battery_conservation", "rapid_charge", "system_performance"]
@@ -26,6 +26,11 @@ system_performance = []
 profiles = ["ideapad_15iil05", "ideapad_amd"]
 ideapad_15iil05 = []
 ideapad_amd = []
+
+# macros
+macros = ["borrowed_cow_array", "borrowed_cow_vec"]
+borrowed_cow_array = []
+borrowed_cow_vec = []
 
 [dev-dependencies]
 serial_test = "0.5.1"
