@@ -641,4 +641,9 @@ impl Profile {
     }
 }
 
+/// Get the current global profile.
+pub fn get() -> RwLockReadGuard<'static, Profile> {
+    Profile::get()
+}
+
 mod tests {}
