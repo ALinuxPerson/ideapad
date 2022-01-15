@@ -92,11 +92,7 @@ impl FallibleDropStrategy for PanicOnError {
 }
 
 pub(crate) fn on_error<E: Error>(error: E) {
-    fn inner(error: &dyn Error) {
-        DROP_STRATEGY.read().on_error(error)
-    }
-
-    inner(&error)
+    FallibleDropStrategy::on_error(DROP_STRATEGY.read().deref(), error)
 }
 
 pub(crate) fn handle_error<E, F>(f: F)
@@ -165,18 +161,6 @@ pub enum FallibleDropStrategies {
     Custom(Box<dyn DynFallibleDropStrategy>),
 }
 
-impl FallibleDropStrategies {
-    pub fn handle_error<F, E>(&self, f: F)
-    where
-        F: FnOnce() -> Result<(), E>,
-        E: Error,
-    {
-        if let Err(error) = f() {
-            self.on_error(&error)
-        }
-    }
-}
-
 impl Default for FallibleDropStrategies {
     fn default() -> Self {
         FallibleDropStrategies::LogToWriterOnError(LogToWriterOnError::new(DynWriter::Stderr(
@@ -185,26 +169,26 @@ impl Default for FallibleDropStrategies {
     }
 }
 
-impl DynFallibleDropStrategy for FallibleDropStrategies {
-    fn on_error(&self, error: &dyn Error) {
+impl FallibleDropStrategy for FallibleDropStrategies {
+    fn on_error<E: Error>(&self, error: E) {
         match self {
             FallibleDropStrategies::LogToWriterOnError(strategy) => {
-                DynFallibleDropStrategy::on_error(strategy, error)
+                FallibleDropStrategy::on_error(strategy, error)
             }
             FallibleDropStrategies::PanicOnError(strategy) => {
-                DynFallibleDropStrategy::on_error(strategy, error)
+                FallibleDropStrategy::on_error(strategy, error)
             }
             FallibleDropStrategies::ExitOnError(strategy) => {
-                DynFallibleDropStrategy::on_error(strategy, error)
+                FallibleDropStrategy::on_error(strategy, error)
             }
             FallibleDropStrategies::DoNothingOnError(strategy) => {
-                DynFallibleDropStrategy::on_error(strategy, error)
+                FallibleDropStrategy::on_error(strategy, error)
             }
             FallibleDropStrategies::Custom(strategy) => {
                 // this *should* incur no overhead at runtime since this just stores a reference to
                 // the dyn object
                 let strategy = DynToGenericFallibleDropStrategyAdapter(strategy.deref());
-                DynFallibleDropStrategy::on_error(&strategy, error)
+                FallibleDropStrategy::on_error(&strategy, error)
             }
         }
     }
