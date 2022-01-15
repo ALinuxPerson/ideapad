@@ -23,9 +23,7 @@ use std::ops::Deref;
 use std::{io, process};
 
 static DROP_STRATEGY: Lazy<RwLock<FallibleDropStrategies>> = Lazy::new(|| {
-    RwLock::new(FallibleDropStrategies::LogToWriterOnError(
-        LogToWriterOnError::new(DynWriter::Stderr(io::stderr())),
-    ))
+    RwLock::new(FallibleDropStrategies::default())
 });
 
 /// Marker trait which indicates that the implementing type is thread safe.
@@ -57,7 +55,7 @@ impl<FDS: FallibleDropStrategy> DynFallibleDropStrategy for FDS {
 }
 
 /// A [`FallibleDropStrategy`] that logs to a specified writer on error.
-struct LogToWriterOnError<W: ThreadSafeWrite> {
+pub struct LogToWriterOnError<W: ThreadSafeWrite> {
     writer: Mutex<W>,
 }
 
@@ -76,7 +74,7 @@ impl<W: ThreadSafeWrite> FallibleDropStrategy for LogToWriterOnError<W> {
     }
 }
 
-struct PanicOnError;
+pub struct PanicOnError;
 
 impl FallibleDropStrategy for PanicOnError {
     fn on_error<E: Error>(&self, error: E) {
@@ -102,8 +100,8 @@ where
     }
 }
 
-struct ExitOnError {
-    exit_code: i32,
+pub struct ExitOnError {
+    pub exit_code: i32,
 }
 
 impl FallibleDropStrategy for ExitOnError {
@@ -112,13 +110,13 @@ impl FallibleDropStrategy for ExitOnError {
     }
 }
 
-struct DoNothingOnError;
+pub struct DoNothingOnError;
 
 impl FallibleDropStrategy for DoNothingOnError {
     fn on_error<E: Error>(&self, _error: E) {}
 }
 
-enum DynWriter {
+pub enum DynWriter {
     Stdout(io::Stdout),
     Stderr(io::Stderr),
     Custom(Box<dyn ThreadSafeWrite>),
@@ -142,12 +140,20 @@ impl Write for DynWriter {
     }
 }
 
-enum FallibleDropStrategies {
+pub enum FallibleDropStrategies {
     LogToWriterOnError(LogToWriterOnError<DynWriter>),
     PanicOnError(PanicOnError),
     ExitOnError(ExitOnError),
     DoNothingOnError(DoNothingOnError),
     Custom(Box<dyn DynFallibleDropStrategy>),
+}
+
+impl Default for FallibleDropStrategies {
+    fn default() -> Self {
+        FallibleDropStrategies::LogToWriterOnError(LogToWriterOnError::new(DynWriter::Stderr(
+            io::stderr(),
+        )))
+    }
 }
 
 impl DynFallibleDropStrategy for FallibleDropStrategies {
