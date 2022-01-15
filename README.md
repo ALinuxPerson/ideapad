@@ -1,4 +1,4 @@
-# `ideapad`
+# ideapad
 A Rust utility library for some Lenovo IdeaPad specific functionality.
 
 # A Fair Warning
