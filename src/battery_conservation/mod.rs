@@ -217,48 +217,43 @@ impl<'ctx> BatteryConservationController<'ctx> {
     }
 }
 
-// /// Uses the global profile. See [`BatteryConservationController::enable_with_handler`] for
-// /// documentation.
-// pub fn enable_with_handler(handler: Handler) -> Result<()> {
-//     Profile::get()
-//         .battery_conservation()
-//         .enable_with_handler(handler)
-// }
-//
-// /// Uses the global profile. See [`BatteryConservationController::enable_ignore`] for documentation.
-// pub fn enable_ignore() -> acpi_call::Result<()> {
-//     Profile::get().battery_conservation().enable_ignore()
-// }
-//
-// /// Uses the global profile. See [`BatteryConservationController::enable_error`] for documentation.
-// pub fn enable_error() -> Result<()> {
-//     Profile::get().battery_conservation().enable_error()
-// }
-//
-// /// Uses the global profile. See [`BatteryConservationController::enable_switch`] for documentation.
-// pub fn enable_switch() -> acpi_call::Result<()> {
-//     Profile::get().battery_conservation().enable_switch()
-// }
-//
-// /// Uses the global profile. See [`BatteryConservationController::disable`] for documentation.
-// pub fn disable() -> acpi_call::Result<()> {
-//     Profile::get().battery_conservation().disable()
-// }
-//
-// /// Uses the global profile. See [`BatteryConservationController::get`] for documentation.
-// pub fn get() -> acpi_call::Result<bool> {
-//     Profile::get().battery_conservation().get()
-// }
-//
-// /// Uses the global profile. See [`BatteryConservationController::enabled`] for documentation.
-// pub fn enabled() -> acpi_call::Result<bool> {
-//     Profile::get().battery_conservation().enabled()
-// }
-//
-// /// Uses the global profile. See [`BatteryConservationController::disabled`] for documentation.
-// pub fn disabled() -> acpi_call::Result<bool> {
-//     Profile::get().battery_conservation().disabled()
-// }
+/// Enable battery conservation with the switch handler. If you want more advanced options, see
+/// [`BatteryConservationController::enable`].
+pub fn enable(context: &Context) -> Result<()> {
+    context.controllers()
+        .battery_conservation()
+        .enable()
+        .switch()
+        .now()
+}
+
+/// Disable battery conservation.
+pub fn disable(context: &Context) -> acpi_call::Result<()> {
+    context.controllers()
+        .battery_conservation()
+        .disable()
+}
+
+/// Get the battery conservation status.
+pub fn get(context: &Context) -> acpi_call::Result<bool> {
+    context.controllers()
+        .battery_conservation()
+        .get()
+}
+
+/// Check if battery conservation is enabled.
+pub fn enabled(context: &Context) -> acpi_call::Result<bool> {
+    context.controllers()
+        .battery_conservation()
+        .enabled()
+}
+
+/// Check if battery conservation is disabled.
+pub fn disabled(context: &Context) -> acpi_call::Result<bool> {
+    context.controllers()
+        .battery_conservation()
+        .disabled()
+}
 
 #[cfg(test)]
 mod tests {
