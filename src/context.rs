@@ -2,6 +2,29 @@ use once_cell::sync::OnceCell;
 use crate::fallible_drop_strategy::FallibleDropStrategies;
 use crate::{BatteryConservationController, Profile, RapidChargeController, SystemPerformanceController};
 
+#[derive(Copy, Clone)]
+pub struct Controllers<'ctx> {
+    pub context: &'ctx Context,
+}
+
+impl<'ctx> Controllers<'ctx> {
+    pub const fn new(context: &'ctx Context) -> Self {
+        Self { context }
+    }
+
+    pub const fn battery_conservation(&self) -> BatteryConservationController {
+        BatteryConservationController::new(self.context)
+    }
+
+    pub const fn rapid_charge(&self) -> RapidChargeController {
+        RapidChargeController::new(self.context)
+    }
+
+    pub const fn system_performance(&self) -> SystemPerformanceController {
+        SystemPerformanceController::new(self.context)
+    }
+}
+
 pub struct Context {
     pub profile: Profile,
     fallible_drop_strategy: OnceCell<FallibleDropStrategies>,
@@ -33,18 +56,7 @@ impl Context {
             .expect("expected fallible drop strategy to already be initialized after initializing it")
     }
 
-    /// Return a battery conservation controller.
-    pub const fn battery_conservation(&self) -> BatteryConservationController {
-        BatteryConservationController::new(self)
-    }
-
-    /// Return a rapid charge controller.
-    pub const fn rapid_charge(&self) -> RapidChargeController {
-        RapidChargeController::new(self)
-    }
-
-    /// Return a system performance controller.
-    pub const fn system_performance(&self) -> SystemPerformanceController {
-        SystemPerformanceController::new(self)
+    pub const fn controllers(&self) -> Controllers {
+        Controllers::new(&self)
     }
 }
