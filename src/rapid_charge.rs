@@ -162,6 +162,17 @@ impl<'this, 'ctx: 'this> BatteryController<'this, 'ctx> for RapidChargeControlle
     }
 }
 
+/// Enable rapid charge, switching off battery conservation if it's enabled.
+///
+/// For more advanced usage, see [`RapidChargeController::enable`].
+pub fn enable(context: &Context) -> Result<()> {
+    context.controllers()
+        .rapid_charge()
+        .enable()
+        .switch()
+        .now()
+}
+
 // /// Uses the global profile. See [`RapidChargeController::enable_with_handler`] for documentation.
 // pub fn enable_with_handler(handler: Handler) -> Result<()> {
 //     Profile::get().rapid_charge().enable_with_handler(handler)
