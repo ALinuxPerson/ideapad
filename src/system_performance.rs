@@ -6,6 +6,8 @@ use crate::acpi_call::{self, acpi_call, acpi_call_expect_valid};
 use crate::profile::{Profile, SystemPerformanceBits, SystemPerformanceParameters};
 use crate::Handler;
 use thiserror::Error;
+use crate::context::Context;
+use crate::fallible_drop_strategy::{FallibleDropStrategies, FallibleDropStrategy};
 
 /// Handy wrapper for [`Error`].
 pub type Result<T, E = Error> = std::result::Result<T, E>;
@@ -123,22 +125,23 @@ impl SystemPerformanceMode {
     }
 }
 
-#[derive(Debug, Ord, PartialOrd, Eq, PartialEq, Hash)]
 #[must_use]
-pub struct SystemPerformanceGuard<'sp, 'p> {
-    pub controller: &'sp mut SystemPerformanceController<'p>,
+pub struct SystemPerformanceGuard<'sp, 'ctx> {
+    pub controller: &'sp mut SystemPerformanceController<'ctx>,
+    pub fallible_drop_strategy: &'ctx FallibleDropStrategies,
     pub on_drop: SystemPerformanceMode,
 }
 
-impl<'sp, 'p> SystemPerformanceGuard<'sp, 'p> {
+impl<'sp, 'ctx> SystemPerformanceGuard<'sp, 'ctx> {
     pub fn new(
-        controller: &'sp mut SystemPerformanceController<'p>,
+        controller: &'sp mut SystemPerformanceController<'ctx>,
         on_init: SystemPerformanceMode,
         on_drop: SystemPerformanceMode,
     ) -> acpi_call::Result<Self> {
         controller.set(on_init)?;
         Ok(Self {
             controller,
+            fallible_drop_strategy: controller.context.fallible_drop_strategy(),
             on_drop,
         })
     }
@@ -146,28 +149,27 @@ impl<'sp, 'p> SystemPerformanceGuard<'sp, 'p> {
 
 impl<'sp, 'p> Drop for SystemPerformanceGuard<'sp, 'p> {
     fn drop(&mut self) {
-        crate::fallible_drop_strategy::handle_error(|| self.controller.set(self.on_drop))
+        self.fallible_drop_strategy.handle_error(|| self.controller.set(self.on_drop))
     }
 }
 
 /// Controller for the system performance mode.
-#[derive(Debug, Copy, Clone, Ord, PartialOrd, Eq, PartialEq, Hash)]
-pub struct SystemPerformanceController<'p> {
-    /// The reference to the profile.
-    pub profile: &'p Profile,
+#[derive(Copy, Clone)]
+pub struct SystemPerformanceController<'ctx> {
+    pub context: &'ctx Context,
 }
 
-impl<'p> SystemPerformanceController<'p> {
+impl<'ctx> SystemPerformanceController<'ctx> {
     /// Create a new system performance controller.
-    pub const fn new(profile: &'p Profile) -> Self {
-        Self { profile }
+    pub const fn new(context: &'ctx Context) -> Self {
+        Self { context }
     }
 
     /// Set the system performance mode to the specified mode.
     pub fn set(&mut self, mode: SystemPerformanceMode) -> acpi_call::Result<()> {
         acpi_call(
-            self.profile.system_performance.commands.set.to_string(),
-            [mode.setter(&self.profile.system_performance.parameters)],
+            self.context.profile.system_performance.commands.set.to_string(),
+            [mode.setter(&self.context.profile.system_performance.parameters)],
         )?;
 
         Ok(())
@@ -176,7 +178,8 @@ impl<'p> SystemPerformanceController<'p> {
     /// Get the system performance mode.
     pub fn get(&self) -> Result<SystemPerformanceMode> {
         let spmo = acpi_call_expect_valid(
-            self.profile
+            self.context
+                .profile
                 .system_performance
                 .commands
                 .get_spmo_bit
@@ -184,7 +187,8 @@ impl<'p> SystemPerformanceController<'p> {
             [],
         )?;
         let fcmo = acpi_call_expect_valid(
-            self.profile
+            self.context
+                .profile
                 .system_performance
                 .commands
                 .get_fcmo_bit
@@ -193,10 +197,10 @@ impl<'p> SystemPerformanceController<'p> {
         )?;
 
         let spm_spmo =
-            SystemPerformanceMode::from_spmo(&self.profile.system_performance.bits, spmo)
+            SystemPerformanceMode::from_spmo(&self.context.profile.system_performance.bits, spmo)
                 .ok_or(Error::InvalidSystemPerformanceMode { bit: spmo })?;
         let spm_fcmo =
-            SystemPerformanceMode::from_fcmo(&self.profile.system_performance.bits, fcmo)
+            SystemPerformanceMode::from_fcmo(&self.context.profile.system_performance.bits, fcmo)
                 .ok_or(Error::InvalidSystemPerformanceMode { bit: fcmo })?;
 
         if spm_spmo != spm_fcmo {
@@ -217,7 +221,7 @@ impl<'p> SystemPerformanceController<'p> {
         &'sp mut self,
         on_init: SystemPerformanceMode,
         on_drop: SystemPerformanceMode,
-    ) -> acpi_call::Result<SystemPerformanceGuard<'sp, 'p>> {
+    ) -> acpi_call::Result<SystemPerformanceGuard<'sp, 'ctx>> {
         SystemPerformanceGuard::new(self, on_init, on_drop)
     }
 }
