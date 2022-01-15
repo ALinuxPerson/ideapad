@@ -2,13 +2,13 @@
 
 use crate::battery_conservation::BatteryConservationController;
 use crate::rapid_charge::RapidChargeController;
+use crate::SystemPerformanceController;
 use once_cell::sync::OnceCell;
 use parking_lot::{RwLock, RwLockReadGuard};
 use smbioslib::SMBiosSystemInformation;
 use std::borrow::Cow;
 use std::io;
 use thiserror::Error;
-use crate::SystemPerformanceController;
 
 /// Handy wrapper for [`Error`].
 pub type Result<T, E = Error> = std::result::Result<T, E>;
@@ -50,7 +50,7 @@ pub enum BitInner {
 
         /// The FCMO bit.
         fcmo: u32,
-    }
+    },
 }
 
 /// Represents an spmo and fcmo bit.
@@ -113,7 +113,11 @@ pub struct SystemPerformanceCommands {
 impl SystemPerformanceCommands {
     /// Create a new set of commands which uses stack allocated variants of types which could be
     /// constructed at compile time.
-    pub const fn r#static(set: &'static str, get_fcmo_bit: &'static str, get_spmo_bit: &'static str) -> Self {
+    pub const fn r#static(
+        set: &'static str,
+        get_fcmo_bit: &'static str,
+        get_spmo_bit: &'static str,
+    ) -> Self {
         Self {
             set: Cow::Borrowed(set),
             get_fcmo_bit: Cow::Borrowed(get_fcmo_bit),
@@ -169,7 +173,11 @@ impl SystemPerformanceParameters {
     };
 
     /// Create a new set of system performance parameters.
-    pub const fn new(intelligent_cooling: u32, extreme_performance: u32, battery_saving: u32) -> Self {
+    pub const fn new(
+        intelligent_cooling: u32,
+        extreme_performance: u32,
+        battery_saving: u32,
+    ) -> Self {
         Self {
             intelligent_cooling,
             extreme_performance,
@@ -261,7 +269,11 @@ pub struct Battery {
 impl Battery {
     /// Create a new battery configuration which uses stack allocated types which can be constructed
     /// at compile time.
-    pub const fn r#static(set_command: &'static str, conservation: SharedBatteryConfiguration, rapid_charge: SharedBatteryConfiguration) -> Self {
+    pub const fn r#static(
+        set_command: &'static str,
+        conservation: SharedBatteryConfiguration,
+        rapid_charge: SharedBatteryConfiguration,
+    ) -> Self {
         Self {
             set_command: Cow::Borrowed(set_command),
             conservation,
@@ -271,7 +283,11 @@ impl Battery {
 
     /// Create a new battery configuration which uses heap allocated types which can be constructed
     /// at compile time.
-    pub const fn dynamic(set_command: String, conservation: SharedBatteryConfiguration, rapid_charge: SharedBatteryConfiguration) -> Self {
+    pub const fn dynamic(
+        set_command: String,
+        conservation: SharedBatteryConfiguration,
+        rapid_charge: SharedBatteryConfiguration,
+    ) -> Self {
         Self {
             set_command: Cow::Owned(set_command),
             conservation,
@@ -322,10 +338,7 @@ impl SharedBatteryConfigurationParameters {
 
     /// Create new shared battery configuration parameters.
     pub const fn new(enable: u32, disable: u32) -> Self {
-        Self {
-            enable,
-            disable,
-        }
+        Self { enable, disable }
     }
 }
 
@@ -343,7 +356,10 @@ pub struct SharedBatteryConfiguration {
 impl SharedBatteryConfiguration {
     /// Create a new battery configuration which uses stack allocated types which can be constructed
     /// at compile time.
-    pub const fn r#static(get_command: &'static str, parameters: SharedBatteryConfigurationParameters) -> Self {
+    pub const fn r#static(
+        get_command: &'static str,
+        parameters: SharedBatteryConfigurationParameters,
+    ) -> Self {
         Self {
             get_command: Cow::Borrowed(get_command),
             parameters,
@@ -352,7 +368,10 @@ impl SharedBatteryConfiguration {
 
     /// Create a new battery configuration which uses heap allocated types which can be constructed
     /// at compile time.
-    pub const fn dynamic(get_command: String, parameters: SharedBatteryConfigurationParameters) -> Self {
+    pub const fn dynamic(
+        get_command: String,
+        parameters: SharedBatteryConfigurationParameters,
+    ) -> Self {
         Self {
             get_command: Cow::Owned(get_command),
             parameters,
@@ -418,7 +437,7 @@ impl Profile {
             SystemPerformanceCommands::r#static(
                 r#"\_SB.PCI0.LPCB.EC0.VPC0.DYTC"#,
                 r#"\_SB.PCI0.LPCB.EC0.FCMO"#,
-               r#"\_SB.PCI0.LPCB.EC0.SPMO"#,
+                r#"\_SB.PCI0.LPCB.EC0.SPMO"#,
             ),
             SystemPerformanceBits::SHARED,
             SystemPerformanceParameters::SHARED,
@@ -432,8 +451,8 @@ impl Profile {
             SharedBatteryConfiguration::r#static(
                 r#"\_SB.PCI0.LPCB.EC0.QCHO"#,
                 SharedBatteryConfigurationParameters::RAPID_CHARGE_SHARED,
-            )
-        )
+            ),
+        ),
     );
 
     /// Default profile for the Ideapad AMD model. For the main differences between this and
@@ -445,7 +464,7 @@ impl Profile {
             SystemPerformanceCommands::r#static(
                 r#"\_SB.PCI0.LPC0.EC0.VPC0.DYTC"#,
                 r#"\_SB.PCI0.LPC0.EC0.FCMO"#,
-               r#"\_SB.PCI0.LPC0.EC0.SPMO"#,
+                r#"\_SB.PCI0.LPC0.EC0.SPMO"#,
             ),
             SystemPerformanceBits::SHARED,
             SystemPerformanceParameters::SHARED,
@@ -459,8 +478,8 @@ impl Profile {
             SharedBatteryConfiguration::r#static(
                 r#"\_SB.PCI0.LPC0.EC0.QCHO"#,
                 SharedBatteryConfigurationParameters::RAPID_CHARGE_SHARED,
-            )
-        )
+            ),
+        ),
     );
 
     /// Create a new profile which uses stack allocated variants of types which could be constructed
@@ -622,6 +641,4 @@ impl Profile {
     }
 }
 
-mod tests {
-
-}
+mod tests {}

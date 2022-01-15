@@ -6,8 +6,8 @@
 //! type for parameters is [`u32`], and the only output from `acpi_call` which is considered valid
 //! are [`u32`]s. Regardless, these features are enough for this crate.
 
-use std::{fs, io, iter};
 use std::borrow::Cow;
+use std::{fs, io, iter};
 use tap::Pipe;
 use thiserror::Error;
 
@@ -24,28 +24,28 @@ pub enum Error {
     KernelModuleNotLoaded {
         /// The source of the error. Usually an [`io::ErrorKind::NotFound`] is the kind of
         /// [`io::Error`].
-        source: io::Error
+        source: io::Error,
     },
 
     /// An unknown value was returned from `acpi_call`.
     #[error("unknown or unsupported value returned from `acpi_call`: '{value}'")]
     UnknownValue {
         /// The value which was returned.
-        value: String
+        value: String,
     },
 
     /// An unknown error was returned from `acpi_call`.
     #[error("unknown error returned from `acpi_call`: {message}")]
     UnknownError {
         /// The error message which was returned.
-        message: String
+        message: String,
     },
 
     /// A method wasn't found in the ACPI table.
     #[error("method '{method}' not found in acpi table")]
     MethodNotFound {
         /// The unknown ACPI method.
-        method: String
+        method: String,
     },
 
     /// A generic IO error happened when using `acpi_call`.

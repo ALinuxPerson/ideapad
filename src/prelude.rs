@@ -6,15 +6,11 @@ pub use crate::{
         BatteryConservationController, Error as BatteryConservationModeError,
         Result as BatteryConservationModeResult,
     },
-    profile::{
-        Profile,
-        Error as ProfileError,
-        Result as ProfileResult,
-    },
+    profile::{Error as ProfileError, Profile, Result as ProfileResult},
     rapid_charge::{Error as RapidChargeError, RapidChargeController, Result as RapidChargeResult},
     system_performance::{
         Error as SystemPerformanceModeError, Result as SystemPerformanceModeResult,
-        SystemPerformanceMode, SystemPerformanceController,
+        SystemPerformanceController, SystemPerformanceMode,
     },
     Handler,
 };

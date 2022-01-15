@@ -15,13 +15,14 @@
 //! You may also implement your own fallible drop strategy and set it as the global drop strategy
 //! via the [`FallibleDropStrategy`] trait and the [`set`] method.
 
-use std::error::Error;
-use std::{io, process};
-use std::io::Write;
 use once_cell::sync::Lazy;
-use parking_lot::{RwLock, Mutex};
+use parking_lot::{Mutex, RwLock};
+use std::error::Error;
+use std::io::Write;
+use std::{io, process};
 
-static DROP_STRATEGY: Lazy<RwLock<Box<dyn DynFallibleDropStrategy>>> = Lazy::new(|| RwLock::new(Box::new(LogToWriterOnError::stderr())));
+static DROP_STRATEGY: Lazy<RwLock<Box<dyn DynFallibleDropStrategy>>> =
+    Lazy::new(|| RwLock::new(Box::new(LogToWriterOnError::stderr())));
 
 /// Marker trait which indicates that the implementing type is thread safe.
 pub trait ThreadSafe: Send + Sync {}
@@ -117,9 +118,9 @@ impl FallibleDropStrategy for DoNothingOnError {
 
 /// Set the global fallible drop strategy to the specified `strategy`.
 pub fn set<T>(strategy: T)
-    where
-        T: FallibleDropStrategy,
-        T: 'static,
+where
+    T: FallibleDropStrategy,
+    T: 'static,
 {
     fn inner(strategy: Box<dyn DynFallibleDropStrategy>) {
         *DROP_STRATEGY.write() = strategy
@@ -129,9 +130,9 @@ pub fn set<T>(strategy: T)
 
 /// Set the global [`FallibleDropStrategy`] to log to the specified writer on error.
 pub fn log_to_writer_on_error<W>(writer: W)
-    where
-        W: Write + ThreadSafe,
-        W: 'static,
+where
+    W: Write + ThreadSafe,
+    W: 'static,
 {
     set(LogToWriterOnError::new(writer))
 }

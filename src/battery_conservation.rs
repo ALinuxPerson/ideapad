@@ -43,14 +43,19 @@ pub struct BatteryConservationEnableGuard<'bc, 'p> {
 
 impl<'bc, 'p> BatteryConservationEnableGuard<'bc, 'p> {
     /// Enable battery conservation mode for the scope with the specified handler.
-    pub fn handler(controller: &'bc mut BatteryConservationController<'p>, handler: Handler) -> Result<Self> {
+    pub fn handler(
+        controller: &'bc mut BatteryConservationController<'p>,
+        handler: Handler,
+    ) -> Result<Self> {
         controller.enable_with_handler(handler)?;
 
         Ok(Self { controller })
     }
 
     /// Enable battery conservation mode for the scope with the ignore handler.
-    pub fn ignore(controller: &'bc mut BatteryConservationController<'p>) -> acpi_call::Result<Self> {
+    pub fn ignore(
+        controller: &'bc mut BatteryConservationController<'p>,
+    ) -> acpi_call::Result<Self> {
         controller.enable_ignore()?;
 
         Ok(Self { controller })
@@ -64,7 +69,9 @@ impl<'bc, 'p> BatteryConservationEnableGuard<'bc, 'p> {
     }
 
     /// Enable battery conservation mode for the scope with the switch handler.
-    pub fn r#switch(controller: &'bc mut BatteryConservationController<'p>) -> acpi_call::Result<Self> {
+    pub fn r#switch(
+        controller: &'bc mut BatteryConservationController<'p>,
+    ) -> acpi_call::Result<Self> {
         controller.enable_switch()?;
 
         Ok(Self { controller })
@@ -87,16 +94,24 @@ pub struct BatteryConservationDisableGuard<'bc, 'p> {
 
 impl<'bc, 'p> BatteryConservationDisableGuard<'bc, 'p> {
     /// Disable battery conservation mode for the scope.
-    pub fn new(controller: &'bc mut BatteryConservationController<'p>, handler: Handler) -> acpi_call::Result<Self> {
+    pub fn new(
+        controller: &'bc mut BatteryConservationController<'p>,
+        handler: Handler,
+    ) -> acpi_call::Result<Self> {
         controller.disable()?;
 
-        Ok(Self { controller, handler })
+        Ok(Self {
+            controller,
+            handler,
+        })
     }
 }
 
 impl<'bc, 'p> Drop for BatteryConservationDisableGuard<'bc, 'p> {
     fn drop(&mut self) {
-        crate::fallible_drop_strategy::handle_error(|| self.controller.enable_with_handler(self.handler))
+        crate::fallible_drop_strategy::handle_error(|| {
+            self.controller.enable_with_handler(self.handler)
+        })
     }
 }
 
@@ -170,11 +185,10 @@ impl<'p> BatteryConservationController<'p> {
 
     /// Get the battery conservation status.
     pub fn get(&self) -> acpi_call::Result<bool> {
-        let output =
-            acpi_call_expect_valid(
-                    self.profile.battery.conservation.get_command.to_string(),
-                []
-            )?;
+        let output = acpi_call_expect_valid(
+            self.profile.battery.conservation.get_command.to_string(),
+            [],
+        )?;
 
         Ok(output != 0)
     }
@@ -190,12 +204,18 @@ impl<'p> BatteryConservationController<'p> {
     }
 
     /// Ensures that the battery conservation mode is enabled for this scope.
-    pub fn enable_guard<'bc>(&'bc mut self, handler: Handler) -> Result<BatteryConservationEnableGuard<'bc, 'p>> {
+    pub fn enable_guard<'bc>(
+        &'bc mut self,
+        handler: Handler,
+    ) -> Result<BatteryConservationEnableGuard<'bc, 'p>> {
         BatteryConservationEnableGuard::handler(self, handler)
     }
 
     /// Ensures that the battery conservation mode is disabled for this scope.
-    pub fn disable_guard<'bc>(&'bc mut self, handler: Handler) -> acpi_call::Result<BatteryConservationDisableGuard<'bc, 'p>> {
+    pub fn disable_guard<'bc>(
+        &'bc mut self,
+        handler: Handler,
+    ) -> acpi_call::Result<BatteryConservationDisableGuard<'bc, 'p>> {
         BatteryConservationDisableGuard::new(self, handler)
     }
 }
@@ -210,9 +230,7 @@ pub fn enable_with_handler(handler: Handler) -> Result<()> {
 
 /// Uses the global profile. See [`BatteryConservationController::enable_ignore`] for documentation.
 pub fn enable_ignore() -> acpi_call::Result<()> {
-    Profile::get()
-        .battery_conservation()
-        .enable_ignore()
+    Profile::get().battery_conservation().enable_ignore()
 }
 
 /// Uses the global profile. See [`BatteryConservationController::enable_error`] for documentation.
@@ -247,7 +265,7 @@ pub fn disabled() -> acpi_call::Result<bool> {
 
 #[cfg(test)]
 mod tests {
-    use crate::{battery_conservation, Handler, rapid_charge};
+    use crate::{battery_conservation, rapid_charge, Handler};
 
     #[test]
     #[serial]
@@ -259,8 +277,7 @@ mod tests {
             .expect("battery conservation enable failed");
 
         // let's test first with ignorance
-        rapid_charge::enable_with_handler(Handler::Ignore)
-            .expect("rapid charge enable failed");
+        rapid_charge::enable_with_handler(Handler::Ignore).expect("rapid charge enable failed");
 
         assert!(
             rapid_charge::enabled().expect("failed to get rapid charge status"),
@@ -281,14 +298,18 @@ mod tests {
 
         let error = rapid_charge::enable_with_handler(Handler::Error)
             .expect_err("rapid charge enable succeeded");
-        assert!(matches!(error, rapid_charge::Error::BatteryConservationEnabled));
+        assert!(matches!(
+            error,
+            rapid_charge::Error::BatteryConservationEnabled
+        ));
         assert!(battery_conservation::enabled().expect("failed to get battery conservation status"));
 
         // now let's test with a switch handler
-        rapid_charge::enable_with_handler(Handler::Switch)
-            .expect("rapid charge enable failed");
+        rapid_charge::enable_with_handler(Handler::Switch).expect("rapid charge enable failed");
         assert!(rapid_charge::enabled().expect("failed to get rapid charge status"));
-        assert!(battery_conservation::disabled().expect("failed to get battery conservation status"));
+        assert!(
+            battery_conservation::disabled().expect("failed to get battery conservation status")
+        );
     }
 
     #[test]
@@ -316,17 +337,27 @@ mod tests {
     }
 
     #[test]
-    fn test_enable_switch() { todo!() }
+    fn test_enable_switch() {
+        todo!()
+    }
 
     #[test]
-    fn test_disable() { todo!() }
+    fn test_disable() {
+        todo!()
+    }
 
     #[test]
-    fn test_get() { todo!() }
+    fn test_get() {
+        todo!()
+    }
 
     #[test]
-    fn test_enabled() { todo!() }
+    fn test_enabled() {
+        todo!()
+    }
 
     #[test]
-    fn test_disabled() { todo!() }
+    fn test_disabled() {
+        todo!()
+    }
 }

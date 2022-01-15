@@ -61,7 +61,7 @@ impl<'p> RapidChargeController<'p> {
     /// careful!
     pub fn enable_ignore(&mut self) -> acpi_call::Result<()> {
         acpi_call(
-                self.profile.battery.set_command.to_string(),
+            self.profile.battery.set_command.to_string(),
             [self.profile.battery.rapid_charge.parameters.enable],
         )?;
 
@@ -92,7 +92,7 @@ impl<'p> RapidChargeController<'p> {
     /// Disable rapid charge.
     pub fn disable(&mut self) -> acpi_call::Result<()> {
         acpi_call(
-                self.profile.battery.set_command.to_string(),
+            self.profile.battery.set_command.to_string(),
             [self.profile.battery.rapid_charge.parameters.disable],
         )?;
 
@@ -103,7 +103,7 @@ impl<'p> RapidChargeController<'p> {
     pub fn get(&self) -> acpi_call::Result<bool> {
         let output = acpi_call_expect_valid(
             self.profile.battery.rapid_charge.get_command.to_string(),
-            []
+            [],
         )?;
 
         Ok(output != 0)
@@ -163,26 +163,42 @@ pub fn disabled() -> acpi_call::Result<bool> {
 #[cfg(test)]
 mod tests {
     #[cfg(test)]
-    fn test_enable_with_handler() { todo!() }
+    fn test_enable_with_handler() {
+        todo!()
+    }
 
     #[cfg(test)]
-    fn test_enable_ignore() { todo!() }
+    fn test_enable_ignore() {
+        todo!()
+    }
 
     #[cfg(test)]
-    fn test_enable_error() { todo!() }
+    fn test_enable_error() {
+        todo!()
+    }
 
     #[cfg(test)]
-    fn test_enable_switch() { todo!() }
+    fn test_enable_switch() {
+        todo!()
+    }
 
     #[cfg(test)]
-    fn test_disable() { todo!() }
+    fn test_disable() {
+        todo!()
+    }
 
     #[cfg(test)]
-    fn test_get() { todo!() }
+    fn test_get() {
+        todo!()
+    }
 
     #[cfg(test)]
-    fn test_enabled() { todo!() }
+    fn test_enabled() {
+        todo!()
+    }
 
     #[cfg(test)]
-    fn test_disabled() { todo!() }
+    fn test_disabled() {
+        todo!()
+    }
 }

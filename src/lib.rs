@@ -14,11 +14,11 @@ pub mod macros;
 
 pub mod acpi_call;
 pub mod battery_conservation;
+pub mod fallible_drop_strategy;
 pub mod prelude;
 pub mod profile;
 pub mod rapid_charge;
 pub mod system_performance;
-pub mod fallible_drop_strategy;
 
 #[cfg(test)]
 mod battery_conservation_rapid_charge_shared_tests;
@@ -26,7 +26,9 @@ mod battery_conservation_rapid_charge_shared_tests;
 pub use prelude::*;
 
 #[cfg(not(target_os = "linux"))]
-compile_error!("this crate only works on linux systems due to its dependency on the `acpi_call` kernel module");
+compile_error!(
+    "this crate only works on linux systems due to its dependency on the `acpi_call` kernel module"
+);
 
 /// Initializes this crate with an auto detected profile. Note that if you don't intend on using
 /// the global profile, you don't need to call this function.
@@ -42,7 +44,9 @@ pub fn initialize_with_profile(profile: Profile) {
 }
 
 /// Initialize the global profile with the specified search path.
-pub fn initialize_with_search_path(search_path: impl Iterator<Item = Profile>) -> profile::Result<()> {
+pub fn initialize_with_search_path(
+    search_path: impl Iterator<Item = Profile>,
+) -> profile::Result<()> {
     let _ = Profile::initialize_with_search_path(search_path)?;
 
     Ok(())
