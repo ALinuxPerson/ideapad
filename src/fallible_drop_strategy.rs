@@ -149,12 +149,20 @@ impl Write for DynWriter {
     }
 }
 
+pub struct DynToGenericFallibleDropStrategyAdapter(pub Box<dyn DynFallibleDropStrategy>);
+
+impl FallibleDropStrategy for DynToGenericFallibleDropStrategyAdapter {
+    fn on_error<E: Error>(&self, error: E) {
+        DynFallibleDropStrategy::on_error(self.0.deref(), &error)
+    }
+}
+
 pub enum FallibleDropStrategies {
     LogToWriterOnError(LogToWriterOnError<DynWriter>),
     PanicOnError(PanicOnError),
     ExitOnError(ExitOnError),
     DoNothingOnError(DoNothingOnError),
-    Custom(Box<dyn DynFallibleDropStrategy>),
+    Custom(DynToGenericFallibleDropStrategyAdapter),
 }
 
 impl FallibleDropStrategies {
@@ -209,7 +217,7 @@ where
     T: FallibleDropStrategy,
     T: 'static,
 {
-    set_known(FallibleDropStrategies::Custom(Box::new(strategy)))
+    set_known(FallibleDropStrategies::Custom(DynToGenericFallibleDropStrategyAdapter(Box::new(strategy))))
 }
 
 /// Set the global [`FallibleDropStrategy`] to log to the specified writer on error.
