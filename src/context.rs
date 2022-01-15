@@ -1,7 +1,5 @@
 use crate::fallible_drop_strategy::FallibleDropStrategies;
-use crate::{
-    BatteryConservationController, Profile, RapidChargeController, SystemPerformanceController,
-};
+use crate::{BatteryConservationController, Profile, profile, RapidChargeController, SystemPerformanceController};
 use once_cell::sync::OnceCell;
 
 #[derive(Copy, Clone)]
@@ -38,6 +36,10 @@ impl Context {
             profile,
             fallible_drop_strategy: OnceCell::new(),
         }
+    }
+
+    pub fn try_default() -> profile::Result<Self> {
+        Ok(Self::new(Profile::find()?))
     }
 
     pub fn with_fallible_drop_strategy(
