@@ -243,6 +243,10 @@ impl<'ctx> SystemPerformanceController<'ctx> {
     ) -> acpi_call::Result<SystemPerformanceGuard<'sp, 'ctx>> {
         SystemPerformanceGuard::new(self, on_init, on_drop)
     }
+
+    pub fn guard_for_this_scope<'sp>(&'sp mut self, mode: SystemPerformanceMode) -> Result<SystemPerformanceGuard<'sp, 'ctx>> {
+        SystemPerformanceGuard::for_this_scope(self, mode)
+    }
 }
 
 // /// Uses the global profile. See [`SystemPerformanceController::get`] for documentation.
