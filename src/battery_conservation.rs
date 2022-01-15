@@ -20,7 +20,9 @@ pub mod enable {
     /// The first stage.
     ///
     /// This stage is where you specify the handler.
-    pub struct Begin;
+    pub struct Begin {
+        _priv: ()
+    }
 
     impl Stage for Begin {}
     impl private::Sealed for Begin {}
@@ -48,7 +50,7 @@ pub mod enable {
     impl<'bc, 'p> EnableBatteryConservationBuilder<'bc, 'p, Begin> {
         /// Create a new builder for enabling battery conservation.
         pub fn new(controller: &'bc mut BatteryConservationController<'p>) -> Self {
-            Self { controller, stage: Begin }
+            Self { controller, stage: Begin { _priv: () } }
         }
 
         /// Enable battery conservation with the specified [`Handler`].
