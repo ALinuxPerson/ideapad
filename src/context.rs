@@ -12,15 +12,15 @@ impl<'ctx> Controllers<'ctx> {
         Self { context }
     }
 
-    pub const fn battery_conservation(&self) -> BatteryConservationController {
+    pub const fn battery_conservation(&self) -> BatteryConservationController<'ctx> {
         BatteryConservationController::new(self.context)
     }
 
-    pub const fn rapid_charge(&self) -> RapidChargeController {
+    pub const fn rapid_charge(&self) -> RapidChargeController<'ctx> {
         RapidChargeController::new(self.context)
     }
 
-    pub const fn system_performance(&self) -> SystemPerformanceController {
+    pub const fn system_performance(&self) -> SystemPerformanceController<'ctx> {
         SystemPerformanceController::new(self.context)
     }
 }
@@ -57,6 +57,6 @@ impl Context {
     }
 
     pub const fn controllers(&self) -> Controllers {
-        Controllers::new(&self)
+        Controllers::new(self)
     }
 }
