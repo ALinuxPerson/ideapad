@@ -40,6 +40,15 @@ impl<T: ThreadSafe + Write> ThreadSafeWrite for T {}
 pub trait FallibleDropStrategy: ThreadSafe {
     /// What to do on an error on a drop.
     fn on_error<E: Error>(&self, error: E);
+    fn handle_error<F, E>(&self, f: F)
+    where
+        F: FnOnce() -> Result<(), E>,
+        E: Error,
+    {
+        if let Err(error) = f() {
+            self.on_error(error)
+        }
+    }
 }
 
 /// Dynamically dispatched version of [`FallibleDropStrategy`].
@@ -146,6 +155,18 @@ pub enum FallibleDropStrategies {
     ExitOnError(ExitOnError),
     DoNothingOnError(DoNothingOnError),
     Custom(Box<dyn DynFallibleDropStrategy>),
+}
+
+impl FallibleDropStrategies {
+    pub fn handle_error<F, E>(&self, f: F)
+    where
+        F: FnOnce() -> Result<(), E>,
+        E: Error,
+    {
+        if let Err(error) = f() {
+            self.on_error(&error)
+        }
+    }
 }
 
 impl Default for FallibleDropStrategies {
