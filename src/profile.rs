@@ -54,16 +54,20 @@ pub struct Bit(BitInner);
 impl Bit {
     /// Create a new bit with the same spmo and fcmo bits.
     pub const fn same(value: u32) -> Self {
-        Self(BitInner::Same(value))
+        Self::from_inner(BitInner::Same(value))
     }
 
     /// Create a new bit with different spmo and fcmo bits. If the spmo and fcmo bits are the same,
     /// it will use the same bit.
     pub const fn different(spmo: u32, fcmo: u32) -> Self {
-        if spmo == fcmo {
-            Self(BitInner::Same(spmo))
-        } else {
-            Self(BitInner::Different { spmo, fcmo })
+        Self::from_inner(BitInner::Different { spmo, fcmo })
+    }
+
+    /// Create a new bit from its inner value.
+    pub const fn from_inner(inner: BitInner) -> Self {
+        match inner {
+            BitInner::Different { spmo, fcmo } if spmo == fcmo => Self::same(spmo),
+            _ => Self(inner),
         }
     }
 
