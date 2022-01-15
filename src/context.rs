@@ -1,11 +1,17 @@
 //! Contains [`Context`], a structure which will be used by the majority of this crate.
 
 use crate::fallible_drop_strategy::FallibleDropStrategies;
-use crate::{
-    profile, BatteryConservationController, Profile, RapidChargeController,
-    SystemPerformanceController,
-};
+use crate::{profile, Profile};
 use once_cell::sync::OnceCell;
+
+#[cfg(feature = "battery_conservation")]
+use crate::battery_conservation::BatteryConservationController;
+
+#[cfg(feature = "rapid_charge")]
+use crate::rapid_charge::RapidChargeController;
+
+#[cfg(feature = "system_performance")]
+use crate::system_performance::SystemPerformanceController;
 
 /// Creates controllers.
 #[derive(Copy, Clone)]
@@ -21,16 +27,19 @@ impl<'ctx> Controllers<'ctx> {
     }
 
     /// Creates a new [`BatteryConservationController`] instance.
+    #[cfg(feature = "battery_conservation")]
     pub const fn battery_conservation(&self) -> BatteryConservationController<'ctx> {
         BatteryConservationController::new(self.context)
     }
 
     /// Creates a new [`RapidChargeController`] instance.
+    #[cfg(feature = "rapid_charge")]
     pub const fn rapid_charge(&self) -> RapidChargeController<'ctx> {
         RapidChargeController::new(self.context)
     }
 
     /// Creates a new [`SystemPerformanceController`] instance.
+    #[cfg(feature = "system_performance")]
     pub const fn system_performance(&self) -> SystemPerformanceController<'ctx> {
         SystemPerformanceController::new(self.context)
     }
