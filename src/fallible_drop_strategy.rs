@@ -111,8 +111,10 @@ impl<W: ThreadSafeWrite> FallibleDropStrategy for LogToWriterOnError<W> {
 }
 
 /// A [`FallibleDropStrategy`] that panics on error.
+#[cfg(feature = "panic_on_error")]
 pub struct PanicOnError;
 
+#[cfg(feature = "panic_on_error")]
 impl FallibleDropStrategy for PanicOnError {
     fn on_error<E: Error>(&self, error: E) {
         panic!("{error}")
@@ -204,6 +206,7 @@ pub enum FallibleDropStrategies {
     LogToWriterOnError(LogToWriterOnError<DynWriter>),
 
     /// A [`FallibleDropStrategy`] that panics on error.
+    #[cfg(feature = "panic_on_error")]
     PanicOnError(PanicOnError),
 
     /// A [`FallibleDropStrategy`] that exits with the specified `exit_code` on error.
@@ -218,6 +221,7 @@ pub enum FallibleDropStrategies {
 
 impl FallibleDropStrategies {
     /// A fallible drop strategy which panics on error.
+    #[cfg(feature = "panic_on_error")]
     pub const PANIC_ON_ERROR: Self = Self::PanicOnError(PanicOnError);
 
     /// A fallible drop strategy which does nothing on error.
@@ -242,6 +246,7 @@ impl FallibleDropStrategies {
     }
 
     /// Returns [`Self::PANIC_ON_ERROR`].
+    #[cfg(feature = "panic_on_error")]
     pub const fn panic_on_error() -> Self {
         Self::PANIC_ON_ERROR
     }
@@ -287,6 +292,8 @@ impl FallibleDropStrategy for FallibleDropStrategies {
             FallibleDropStrategies::LogToWriterOnError(strategy) => {
                 FallibleDropStrategy::on_error(strategy, error)
             }
+
+            #[cfg(feature = "panic_on_error")]
             FallibleDropStrategies::PanicOnError(strategy) => {
                 FallibleDropStrategy::on_error(strategy, error)
             }
