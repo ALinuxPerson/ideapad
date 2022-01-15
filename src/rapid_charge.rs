@@ -3,9 +3,9 @@
 //! Rapid charge charges your battery faster somehow.
 
 use crate::acpi_call::{self, acpi_call, acpi_call_expect_valid};
-use crate::profile::Profile;
 use crate::Handler;
 use thiserror::Error;
+use crate::context::Context;
 
 /// Handy wrapper for [`Error`].
 pub type Result<T, E = Error> = std::result::Result<T, E>;
@@ -31,16 +31,15 @@ pub enum Error {
 }
 
 /// Controller for rapid charge.
-#[derive(Debug, Clone, Ord, PartialOrd, Eq, PartialEq, Hash)]
-pub struct RapidChargeController<'p> {
-    /// Reference to the profile.
-    pub profile: &'p Profile,
+#[derive(Copy, Clone)]
+pub struct RapidChargeController<'ctx> {
+    pub context: &'ctx Context,
 }
 
-impl<'p> RapidChargeController<'p> {
+impl<'ctx> RapidChargeController<'ctx> {
     /// Create a new controller.
-    pub const fn new(profile: &'p Profile) -> Self {
-        Self { profile }
+    pub const fn new(context: &'ctx Context) -> Self {
+        Self { context }
     }
 
     /// Enable rapid charge with the specified [`Handler`].
@@ -61,8 +60,8 @@ impl<'p> RapidChargeController<'p> {
     /// careful!
     pub fn enable_ignore(&mut self) -> acpi_call::Result<()> {
         acpi_call(
-            self.profile.battery.set_command.to_string(),
-            [self.profile.battery.rapid_charge.parameters.enable],
+            self.context.profile.battery.set_command.to_string(),
+            [self.context.profile.battery.rapid_charge.parameters.enable],
         )?;
 
         Ok(())
@@ -71,7 +70,7 @@ impl<'p> RapidChargeController<'p> {
     /// Enable battery conservation, returning an [`Error::BatteryConservationEnabled`] if rapid
     /// charge is already enabled.
     pub fn enable_error(&mut self) -> Result<()> {
-        if self.profile.battery_conservation().enabled()? {
+        if self.context.profile.battery_conservation().enabled()? {
             Err(Error::BatteryConservationEnabled)
         } else {
             self.enable_ignore().map_err(Into::into)
@@ -80,7 +79,7 @@ impl<'p> RapidChargeController<'p> {
 
     /// Enable rapid charge, switching off battery conservation if it is enabled.
     pub fn enable_switch(&mut self) -> acpi_call::Result<()> {
-        let mut battery_conservation = self.profile.battery_conservation();
+        let mut battery_conservation = self.context.profile.battery_conservation();
 
         if battery_conservation.enabled()? {
             battery_conservation.disable()?
@@ -92,8 +91,8 @@ impl<'p> RapidChargeController<'p> {
     /// Disable rapid charge.
     pub fn disable(&mut self) -> acpi_call::Result<()> {
         acpi_call(
-            self.profile.battery.set_command.to_string(),
-            [self.profile.battery.rapid_charge.parameters.disable],
+            self.context.profile.battery.set_command.to_string(),
+            [self.context.profile.battery.rapid_charge.parameters.disable],
         )?;
 
         Ok(())
@@ -102,7 +101,7 @@ impl<'p> RapidChargeController<'p> {
     /// Get the rapid charge status.
     pub fn get(&self) -> acpi_call::Result<bool> {
         let output = acpi_call_expect_valid(
-            self.profile.battery.rapid_charge.get_command.to_string(),
+            self.context.profile.battery.rapid_charge.get_command.to_string(),
             [],
         )?;
 
