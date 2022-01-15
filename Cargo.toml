@@ -14,17 +14,10 @@ tap = "1.0.1"
 thiserror = "1.0.30"
 
 [features]
+default = ["battery_conservation", "rapid_charge", "system_performance"]
 battery_conservation = []
 rapid_charge = []
 system_performance = []
-fallible_drop_strategy = []
-ideapad_15iil05 = []
-ideapad_amd = []
-log_to_stderr = []
-log_to_stdout = []
-log_to_writer = ["log_to_stderr", "log_to_stdout"]
-panic_on_error = []
-ignore_error = []
 
 [dev-dependencies]
 serial_test = "0.5.1"
