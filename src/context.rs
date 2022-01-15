@@ -1,36 +1,47 @@
+//! Contains [`Context`], a structure which will be used by the majority of this crate.
+
 use crate::fallible_drop_strategy::FallibleDropStrategies;
 use crate::{BatteryConservationController, Profile, profile, RapidChargeController, SystemPerformanceController};
 use once_cell::sync::OnceCell;
 
+/// Creates controllers.
 #[derive(Copy, Clone)]
 pub struct Controllers<'ctx> {
+    /// A reference to the [`Context`].
     pub context: &'ctx Context,
 }
 
 impl<'ctx> Controllers<'ctx> {
+    /// Creates a new [`Controllers`] instance.
     pub const fn new(context: &'ctx Context) -> Self {
         Self { context }
     }
 
+    /// Creates a new [`BatteryConservationController`] instance.
     pub const fn battery_conservation(&self) -> BatteryConservationController<'ctx> {
         BatteryConservationController::new(self.context)
     }
 
+    /// Creates a new [`RapidChargeController`] instance.
     pub const fn rapid_charge(&self) -> RapidChargeController<'ctx> {
         RapidChargeController::new(self.context)
     }
 
+    /// Creates a new [`SystemPerformanceController`] instance.
     pub const fn system_performance(&self) -> SystemPerformanceController<'ctx> {
         SystemPerformanceController::new(self.context)
     }
 }
 
+/// A context, which will be used by all controllers in this crate.
 pub struct Context {
+    /// The profile.
     pub profile: Profile,
     fallible_drop_strategy: OnceCell<FallibleDropStrategies>,
 }
 
 impl Context {
+    /// Creates a new context.
     pub const fn new(profile: Profile) -> Self {
         Self {
             profile,
@@ -38,10 +49,15 @@ impl Context {
         }
     }
 
+    /// Try and create a new context by trying to find a profile.
     pub fn try_default() -> profile::Result<Self> {
         Ok(Self::new(Profile::find()?))
     }
 
+    /// Set the fallible drop strategy.
+    ///
+    /// # Notes
+    /// If fallible drop strategy is already set, it won't be overwritten.
     pub fn with_fallible_drop_strategy(
         self,
         fallible_drop_strategy: FallibleDropStrategies,
@@ -50,11 +66,13 @@ impl Context {
         self
     }
 
+    /// Get a reference to the fallible drop strategy.
     pub fn fallible_drop_strategy(&self) -> &FallibleDropStrategies {
         self.fallible_drop_strategy
             .get_or_init(FallibleDropStrategies::default)
     }
 
+    /// Get a mutable reference to the fallible drop strategy.
     pub fn fallible_drop_strategy_mut(&mut self) -> &mut FallibleDropStrategies {
         if self.fallible_drop_strategy.get().is_none() {
             let _ = self
@@ -67,6 +85,7 @@ impl Context {
         )
     }
 
+    /// Create a controller creator.
     pub const fn controllers(&self) -> Controllers {
         Controllers::new(self)
     }
