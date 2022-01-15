@@ -20,14 +20,19 @@ use parking_lot::{Mutex, RwLock};
 use std::error::Error;
 use std::io::Write;
 use std::{io, process};
+use std::ops::Deref;
 
-static DROP_STRATEGY: Lazy<RwLock<Box<dyn DynFallibleDropStrategy>>> =
-    Lazy::new(|| RwLock::new(Box::new(LogToWriterOnError::stderr())));
+static DROP_STRATEGY: Lazy<RwLock<FallibleDropStrategies>> =
+    Lazy::new(|| RwLock::new(FallibleDropStrategies::LogToWriterOnError(LogToWriterOnError::new(DynWriter::Stderr(io::stderr())))));
 
 /// Marker trait which indicates that the implementing type is thread safe.
 pub trait ThreadSafe: Send + Sync {}
 
 impl<T: Send + Sync> ThreadSafe for T {}
+
+pub trait ThreadSafeWrite: ThreadSafe + Write {}
+
+impl<T: ThreadSafe + Write> ThreadSafeWrite for T {}
 
 /// This trait indicates that a structure can be used to handle errors that occur from drops.
 pub trait FallibleDropStrategy: ThreadSafe {
@@ -50,13 +55,6 @@ impl<FDS: FallibleDropStrategy> DynFallibleDropStrategy for FDS {
 /// A [`FallibleDropStrategy`] that logs to a specified writer on error.
 struct LogToWriterOnError<W: Write + ThreadSafe> {
     writer: Mutex<W>,
-}
-
-impl LogToWriterOnError<io::Stderr> {
-    /// Logs to standard error on error.
-    pub fn stderr() -> Self {
-        Self::new(io::stderr())
-    }
 }
 
 impl<W: Write + ThreadSafe> LogToWriterOnError<W> {
@@ -116,16 +114,71 @@ impl FallibleDropStrategy for DoNothingOnError {
     fn on_error<E: Error>(&self, _error: E) {}
 }
 
+enum DynWriter {
+    Stdout(io::Stdout),
+    Stderr(io::Stderr),
+    Custom(Box<dyn ThreadSafeWrite>),
+}
+
+impl Write for DynWriter {
+    fn write(&mut self, buf: &[u8]) -> io::Result<usize> {
+        match self {
+            Self::Stdout(writer) => writer.write(buf),
+            Self::Stderr(writer) => writer.write(buf),
+            Self::Custom(writer) => writer.write(buf),
+        }
+    }
+
+    fn flush(&mut self) -> io::Result<()> {
+        match self {
+            Self::Stdout(writer) => writer.flush(),
+            Self::Stderr(writer) => writer.flush(),
+            Self::Custom(writer) => writer.flush(),
+        }
+    }
+}
+
+enum FallibleDropStrategies {
+    LogToWriterOnError(LogToWriterOnError<DynWriter>),
+    PanicOnError(PanicOnError),
+    ExitOnError(ExitOnError),
+    DoNothingOnError(DoNothingOnError),
+    Custom(Box<dyn DynFallibleDropStrategy>),
+}
+
+impl DynFallibleDropStrategy for FallibleDropStrategies {
+    fn on_error(&self, error: &dyn Error) {
+        match self {
+            FallibleDropStrategies::LogToWriterOnError(strategy) => {
+                DynFallibleDropStrategy::on_error(strategy, error)
+            }
+            FallibleDropStrategies::PanicOnError(strategy) => {
+                DynFallibleDropStrategy::on_error(strategy, error)
+            }
+            FallibleDropStrategies::ExitOnError(strategy) => {
+                DynFallibleDropStrategy::on_error(strategy, error)
+            }
+            FallibleDropStrategies::DoNothingOnError(strategy) => {
+                DynFallibleDropStrategy::on_error(strategy, error)
+            }
+            FallibleDropStrategies::Custom(strategy) => {
+                DynFallibleDropStrategy::on_error(strategy.deref(), error)
+            }
+        }
+    }
+}
+
+fn set_known(strategy: FallibleDropStrategies) {
+    *DROP_STRATEGY.write() = strategy
+}
+
 /// Set the global fallible drop strategy to the specified `strategy`.
 pub fn set<T>(strategy: T)
 where
     T: FallibleDropStrategy,
     T: 'static,
 {
-    fn inner(strategy: Box<dyn DynFallibleDropStrategy>) {
-        *DROP_STRATEGY.write() = strategy
-    }
-    inner(Box::new(strategy))
+    set_known(FallibleDropStrategies::Custom(Box::new(strategy)))
 }
 
 /// Set the global [`FallibleDropStrategy`] to log to the specified writer on error.
@@ -134,27 +187,27 @@ where
     W: Write + ThreadSafe,
     W: 'static,
 {
-    set(LogToWriterOnError::new(writer))
+    set_known(FallibleDropStrategies::LogToWriterOnError(LogToWriterOnError::new(DynWriter::Custom(Box::new(writer)))))
 }
 
 /// Set the global [`FallibleDropStrategy`] to log to standard output on error.
 pub fn log_to_stdout_on_error() {
-    log_to_writer_on_error(io::stdout())
+    set_known(FallibleDropStrategies::LogToWriterOnError(LogToWriterOnError::new(DynWriter::Stdout(io::stdout()))))
 }
 
 /// Set the global [`FallibleDropStrategy`] to log to standard error on error.
 pub fn log_to_stderr_on_error() {
-    log_to_writer_on_error(io::stderr())
+    set_known(FallibleDropStrategies::LogToWriterOnError(LogToWriterOnError::new(DynWriter::Stderr(io::stderr()))))
 }
 
 /// Set the global [`FallibleDropStrategy`] to panic on error.
 pub fn panic_on_error() {
-    set(PanicOnError)
+    set_known(FallibleDropStrategies::PanicOnError(PanicOnError))
 }
 
 /// Set the global [`FallibleDropStrategy`] to exit with the specified exit code on error.
 pub fn exit_with_code_on_error(exit_code: i32) {
-    set(ExitOnError { exit_code })
+    set_known(FallibleDropStrategies::ExitOnError(ExitOnError { exit_code }))
 }
 
 /// Set the global [`FallibleDropStrategy`] to exit on error.
@@ -164,5 +217,5 @@ pub fn exit_on_error() {
 
 /// Set the global [`FallibleDropStrategy`] to do nothing on error.
 pub fn do_nothing_on_error() {
-    set(DoNothingOnError)
+    set_known(FallibleDropStrategies::DoNothingOnError(DoNothingOnError))
 }
