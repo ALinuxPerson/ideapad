@@ -25,9 +25,8 @@ pub mod system_performance;
 #[cfg(test)]
 mod battery_conservation_rapid_charge_shared_tests;
 
-use parking_lot::RwLockReadGuard;
-pub use prelude::*;
 use crate::context::Context;
+pub use prelude::*;
 
 #[cfg(not(target_os = "linux"))]
 compile_error!(

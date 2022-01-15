@@ -150,7 +150,10 @@ impl<'sp, 'ctx> SystemPerformanceGuard<'sp, 'ctx> {
 
     /// Set the new system performance mode for the scope, setting it back to the old system
     /// performance mode when dropped.
-    pub fn for_this_scope(controller: &'sp mut SystemPerformanceController<'ctx>, mode: SystemPerformanceMode) -> Result<Self> {
+    pub fn for_this_scope(
+        controller: &'sp mut SystemPerformanceController<'ctx>,
+        mode: SystemPerformanceMode,
+    ) -> Result<Self> {
         Ok(Self::new(controller, mode, controller.get()?)?)
     }
 
@@ -248,7 +251,10 @@ impl<'ctx> SystemPerformanceController<'ctx> {
 
     /// Get a guard that guarantees that the system performance mode will be set to the specified
     /// system performance mode, setting back the old one when dropped.
-    pub fn guard_for_this_scope<'sp>(&'sp mut self, mode: SystemPerformanceMode) -> Result<SystemPerformanceGuard<'sp, 'ctx>> {
+    pub fn guard_for_this_scope<'sp>(
+        &'sp mut self,
+        mode: SystemPerformanceMode,
+    ) -> Result<SystemPerformanceGuard<'sp, 'ctx>> {
         SystemPerformanceGuard::for_this_scope(self, mode)
     }
 }

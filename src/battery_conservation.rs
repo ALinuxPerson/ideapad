@@ -6,12 +6,10 @@
 //! conservation mode at. For example, if you charge your battery to 80% and then enable battery
 //! conservation mode, the battery level will be capped at 80%.
 use crate::acpi_call::{self, acpi_call, acpi_call_expect_valid};
-use crate::battery::enable::{EnableBuilder, Stage};
+use crate::battery::enable::EnableBuilder;
 use crate::battery::{BatteryController, BatteryEnableGuard};
 use crate::context::Context;
-use crate::fallible_drop_strategy::{
-    DynFallibleDropStrategy, FallibleDropStrategies, FallibleDropStrategy,
-};
+use crate::fallible_drop_strategy::{FallibleDropStrategies, FallibleDropStrategy};
 use crate::Handler;
 use thiserror::Error;
 
@@ -238,8 +236,8 @@ pub fn disabled(context: &Context) -> acpi_call::Result<bool> {
 
 #[cfg(test)]
 mod tests {
+    use crate::{battery_conservation, rapid_charge, Context, Handler};
     use once_cell::sync::Lazy;
-    use crate::{battery_conservation, rapid_charge, Handler, Context};
 
     static CONTEXT: Lazy<Context> = Lazy::new(|| crate::context().expect("failed to get context"));
 

@@ -1,7 +1,10 @@
 //! Contains [`Context`], a structure which will be used by the majority of this crate.
 
 use crate::fallible_drop_strategy::FallibleDropStrategies;
-use crate::{BatteryConservationController, Profile, profile, RapidChargeController, SystemPerformanceController};
+use crate::{
+    profile, BatteryConservationController, Profile, RapidChargeController,
+    SystemPerformanceController,
+};
 use once_cell::sync::OnceCell;
 
 /// Creates controllers.

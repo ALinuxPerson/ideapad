@@ -66,8 +66,7 @@ pub trait FallibleDropStrategy: ThreadSafe {
     fn on_error<E: Error>(&self, error: E);
 
     /// Handle an error on a drop.
-    fn handle_error<T: CouldGetError>(&self, item: T)
-    {
+    fn handle_error<T: CouldGetError>(&self, item: T) {
         if let Err(error) = item.get() {
             self.on_error(error)
         }

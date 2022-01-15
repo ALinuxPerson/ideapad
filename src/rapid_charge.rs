@@ -166,11 +166,7 @@ impl<'this, 'ctx: 'this> BatteryController<'this, 'ctx> for RapidChargeControlle
 ///
 /// For more advanced usage, see [`RapidChargeController::enable`].
 pub fn enable(context: &Context) -> Result<()> {
-    context.controllers()
-        .rapid_charge()
-        .enable()
-        .switch()
-        .now()
+    context.controllers().rapid_charge().enable().switch().now()
 }
 
 /// Disable rapid charge.
