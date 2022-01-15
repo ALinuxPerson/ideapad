@@ -27,11 +27,17 @@ mod battery_conservation_rapid_charge_shared_tests;
 
 use parking_lot::RwLockReadGuard;
 pub use prelude::*;
+use crate::context::Context;
 
 #[cfg(not(target_os = "linux"))]
 compile_error!(
     "this crate only works on linux systems due to its dependency on the `acpi_call` kernel module"
 );
+
+/// Try and retrieve a context.
+pub fn context() -> profile::Result<Context> {
+    Context::try_default()
+}
 
 /// Handlers which determine what to do when battery conservation and rapid charge modes conflict.
 #[derive(Debug, Copy, Clone, Ord, PartialOrd, Eq, PartialEq, Hash)]
