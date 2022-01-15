@@ -15,16 +15,11 @@
 //! You may also implement your own fallible drop strategy and set it as the global drop strategy
 //! via the [`FallibleDropStrategy`] trait and the [`set`] method.
 
-use once_cell::sync::Lazy;
 use parking_lot::{Mutex, RwLock};
 use std::error::Error;
 use std::io::Write;
 use std::ops::Deref;
 use std::{io, process};
-
-static DROP_STRATEGY: Lazy<RwLock<FallibleDropStrategies>> = Lazy::new(|| {
-    RwLock::new(FallibleDropStrategies::default())
-});
 
 /// Marker trait which indicates that the implementing type is thread safe.
 pub trait ThreadSafe: Send + Sync {}
@@ -88,20 +83,6 @@ pub struct PanicOnError;
 impl FallibleDropStrategy for PanicOnError {
     fn on_error<E: Error>(&self, error: E) {
         panic!("{error}")
-    }
-}
-
-pub(crate) fn on_error<E: Error>(error: E) {
-    FallibleDropStrategy::on_error(DROP_STRATEGY.read().deref(), error)
-}
-
-pub(crate) fn handle_error<E, F>(f: F)
-where
-    F: FnOnce() -> Result<(), E>,
-    E: Error,
-{
-    if let Err(error) = f() {
-        on_error(error)
     }
 }
 
@@ -192,64 +173,4 @@ impl FallibleDropStrategy for FallibleDropStrategies {
             }
         }
     }
-}
-
-fn set_known(strategy: FallibleDropStrategies) {
-    *DROP_STRATEGY.write() = strategy
-}
-
-/// Set the global fallible drop strategy to the specified `strategy`.
-pub fn set<T>(strategy: T)
-where
-    T: FallibleDropStrategy,
-    T: 'static,
-{
-    set_known(FallibleDropStrategies::Custom(Box::new(strategy)))
-}
-
-/// Set the global [`FallibleDropStrategy`] to log to the specified writer on error.
-pub fn log_to_writer_on_error<W>(writer: W)
-where
-    W: Write + ThreadSafe,
-    W: 'static,
-{
-    set_known(FallibleDropStrategies::LogToWriterOnError(
-        LogToWriterOnError::new(DynWriter::Custom(Box::new(writer))),
-    ))
-}
-
-/// Set the global [`FallibleDropStrategy`] to log to standard output on error.
-pub fn log_to_stdout_on_error() {
-    set_known(FallibleDropStrategies::LogToWriterOnError(
-        LogToWriterOnError::new(DynWriter::Stdout(io::stdout())),
-    ))
-}
-
-/// Set the global [`FallibleDropStrategy`] to log to standard error on error.
-pub fn log_to_stderr_on_error() {
-    set_known(FallibleDropStrategies::LogToWriterOnError(
-        LogToWriterOnError::new(DynWriter::Stderr(io::stderr())),
-    ))
-}
-
-/// Set the global [`FallibleDropStrategy`] to panic on error.
-pub fn panic_on_error() {
-    set_known(FallibleDropStrategies::PanicOnError(PanicOnError))
-}
-
-/// Set the global [`FallibleDropStrategy`] to exit with the specified exit code on error.
-pub fn exit_with_code_on_error(exit_code: i32) {
-    set_known(FallibleDropStrategies::ExitOnError(ExitOnError {
-        exit_code,
-    }))
-}
-
-/// Set the global [`FallibleDropStrategy`] to exit on error.
-pub fn exit_on_error() {
-    exit_with_code_on_error(1)
-}
-
-/// Set the global [`FallibleDropStrategy`] to do nothing on error.
-pub fn do_nothing_on_error() {
-    set_known(FallibleDropStrategies::DoNothingOnError(DoNothingOnError))
 }
