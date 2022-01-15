@@ -62,6 +62,8 @@ where
 pub trait FallibleDropStrategy: ThreadSafe {
     /// What to do on an error on a drop.
     fn on_error<E: Error>(&self, error: E);
+
+    /// Handle an error on a drop.
     fn handle_error<T: CouldGetError>(&self, item: T)
     {
         if let Err(error) = item.get() {
@@ -102,6 +104,7 @@ impl<W: ThreadSafeWrite> FallibleDropStrategy for LogToWriterOnError<W> {
     }
 }
 
+/// A [`FallibleDropStrategy`] that panics on error.
 pub struct PanicOnError;
 
 impl FallibleDropStrategy for PanicOnError {
@@ -110,7 +113,9 @@ impl FallibleDropStrategy for PanicOnError {
     }
 }
 
+/// A [`FallibleDropStrategy`] that exits with the specified `exit_code` on error.
 pub struct ExitOnError {
+    /// The exit code to use.
     pub exit_code: i32,
 }
 
@@ -120,27 +125,37 @@ impl FallibleDropStrategy for ExitOnError {
     }
 }
 
+/// A [`FallibleDropStrategy`] that ignores errors.
 pub struct DoNothingOnError;
 
 impl FallibleDropStrategy for DoNothingOnError {
     fn on_error<E: Error>(&self, _error: E) {}
 }
 
+/// A writer which attempts to use the most common variants if possible.
 pub enum DynWriter {
+    /// A standard output writer.
     Stdout(io::Stdout),
+
+    /// A standard error writer.
     Stderr(io::Stderr),
+
+    /// A custom writer.
     Custom(Box<dyn ThreadSafeWrite>),
 }
 
 impl DynWriter {
+    /// Creates a new standard output writer.
     pub fn stdout() -> Self {
         Self::Stdout(io::stdout())
     }
 
+    /// Creates a new standard error writer.
     pub fn stderr() -> Self {
         Self::Stderr(io::stderr())
     }
 
+    /// Creates a new custom writer.
     pub fn custom<W: ThreadSafeWrite + 'static>(writer: W) -> Self {
         Self::Custom(Box::new(writer))
     }
@@ -172,46 +187,68 @@ impl<'a> FallibleDropStrategy for DynToGenericFallibleDropStrategyAdapter<'a> {
     }
 }
 
+/// A variety of drop strategies which offers the most common use cases, with a custom
+/// [`FallibleDropStrategy`] in case you need to do something more specific.
 pub enum FallibleDropStrategies {
+    /// A [`FallibleDropStrategy`] that logs to a specified writer on error.
     LogToWriterOnError(LogToWriterOnError<DynWriter>),
+
+    /// A [`FallibleDropStrategy`] that panics on error.
     PanicOnError(PanicOnError),
+
+    /// A [`FallibleDropStrategy`] that exits with the specified `exit_code` on error.
     ExitOnError(ExitOnError),
+
+    /// A [`FallibleDropStrategy`] that ignores errors.
     DoNothingOnError(DoNothingOnError),
+
+    /// A custom [`FallibleDropStrategy`].
     Custom(Box<dyn DynFallibleDropStrategy>),
 }
 
 impl FallibleDropStrategies {
+    /// A fallible drop strategy which panics on error.
     pub const PANIC_ON_ERROR: Self = Self::PanicOnError(PanicOnError);
+
+    /// A fallible drop strategy which does nothing on error.
     pub const DO_NOTHING_ON_ERROR: Self = Self::DoNothingOnError(DoNothingOnError);
 
+    /// A fallible drop strategy which logs to a specified writer on error.
     pub fn log_to_writer_on_error<W: ThreadSafeWrite + 'static>(writer: W) -> Self {
         Self::LogToWriterOnError(LogToWriterOnError::new(DynWriter::custom(writer)))
     }
 
+    /// A fallible drop strategy which logs to standard output on error.
     pub fn log_to_stdout_on_error() -> Self {
         Self::LogToWriterOnError(LogToWriterOnError::new(DynWriter::stdout()))
     }
 
+    /// A fallible drop strategy which logs to standard error on error.
     pub fn log_to_stderr_on_error() -> Self {
         Self::LogToWriterOnError(LogToWriterOnError::new(DynWriter::stderr()))
     }
 
+    /// Returns [`Self::PANIC_ON_ERROR`].
     pub const fn panic_on_error() -> Self {
         Self::PANIC_ON_ERROR
     }
 
+    /// A fallible drop strategy which exits with the specified `exit_code` on error.
     pub const fn exit_with_code_on_error(exit_code: i32) -> Self {
         Self::ExitOnError(ExitOnError { exit_code })
     }
 
+    /// A fallible drop strategy which exits with code 1 on error.
     pub const fn exit_on_error() -> Self {
         Self::exit_with_code_on_error(1)
     }
 
+    /// Returns [`Self::DO_NOTHING_ON_ERROR`].
     pub const fn do_nothing_on_error() -> Self {
         Self::DO_NOTHING_ON_ERROR
     }
 
+    /// A custom fallible drop strategy.
     pub fn custom<T: DynFallibleDropStrategy + 'static>(fallible_drop_strategy: T) -> Self {
         Self::Custom(Box::new(fallible_drop_strategy))
     }
