@@ -128,7 +128,6 @@ impl SystemPerformanceMode {
 #[must_use]
 pub struct SystemPerformanceGuard<'sp, 'ctx> {
     pub controller: &'sp mut SystemPerformanceController<'ctx>,
-    pub fallible_drop_strategy: &'ctx FallibleDropStrategies,
     pub on_drop: SystemPerformanceMode,
 }
 
@@ -141,15 +140,19 @@ impl<'sp, 'ctx> SystemPerformanceGuard<'sp, 'ctx> {
         controller.set(on_init)?;
         Ok(Self {
             controller,
-            fallible_drop_strategy: controller.context.fallible_drop_strategy(),
             on_drop,
         })
+    }
+
+    fn fallible_drop_strategy(&self) -> &'ctx FallibleDropStrategies {
+        self.controller.context.fallible_drop_strategy()
     }
 }
 
 impl<'sp, 'p> Drop for SystemPerformanceGuard<'sp, 'p> {
     fn drop(&mut self) {
-        self.fallible_drop_strategy.handle_error(|| self.controller.set(self.on_drop))
+        self.fallible_drop_strategy()
+            .handle_error(|| self.controller.set(self.on_drop))
     }
 }
 

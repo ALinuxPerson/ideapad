@@ -41,7 +41,6 @@ pub enum Error {
 #[must_use]
 pub struct BatteryConservationEnableGuard<'bc, 'ctx> {
     controller: &'bc mut BatteryConservationController<'ctx>,
-    fallible_drop_strategy: &'ctx FallibleDropStrategies,
 }
 
 impl<'bc, 'ctx> BatteryConservationEnableGuard<'bc, 'ctx> {
@@ -54,14 +53,17 @@ impl<'bc, 'ctx> BatteryConservationEnableGuard<'bc, 'ctx> {
 
         Ok(Self {
             controller,
-            fallible_drop_strategy: controller.context.fallible_drop_strategy(),
         })
+    }
+
+    fn fallible_drop_strategy(&self) -> &'ctx FallibleDropStrategies {
+        self.controller.context.fallible_drop_strategy()
     }
 }
 
 impl<'bc, 'ctx> Drop for BatteryConservationEnableGuard<'bc, 'ctx> {
     fn drop(&mut self) {
-        self.fallible_drop_strategy.handle_error(|| self.controller.disable())
+        self.fallible_drop_strategy().handle_error(|| self.controller.disable())
     }
 }
 
@@ -69,7 +71,6 @@ impl<'bc, 'ctx> Drop for BatteryConservationEnableGuard<'bc, 'ctx> {
 #[must_use]
 pub struct BatteryConservationDisableGuard<'bc, 'ctx> {
     controller: &'bc mut BatteryConservationController<'ctx>,
-    fallible_drop_strategy: &'ctx FallibleDropStrategies,
     handler: Handler,
 }
 
@@ -83,15 +84,18 @@ impl<'bc, 'ctx> BatteryConservationDisableGuard<'bc, 'ctx> {
 
         Ok(Self {
             controller,
-            fallible_drop_strategy: controller.context.fallible_drop_strategy(),
             handler,
         })
+    }
+
+    fn fallible_drop_strategy(&self) -> &'ctx FallibleDropStrategies {
+        self.controller.context.fallible_drop_strategy()
     }
 }
 
 impl<'bc, 'ctx> Drop for BatteryConservationDisableGuard<'bc, 'ctx> {
     fn drop(&mut self) {
-        self.fallible_drop_strategy.handle_error(|| self.controller.enable().handler(self.handler).now())
+        self.fallible_drop_strategy().handle_error(|| self.controller.enable().handler(self.handler).now())
     }
 }
 
@@ -141,7 +145,7 @@ impl<'ctx> BatteryConservationController<'ctx> {
     /// Enable battery conservation, returning an [`Error::RapidChargeEnabled`] if rapid charge is
     /// already enabled.
     pub fn enable_error(&mut self) -> Result<()> {
-        if self.context.profile.rapid_charge().enabled()? {
+        if self.context.controllers().rapid_charge().enabled()? {
             Err(Error::RapidChargeEnabled)
         } else {
             self.enable_ignore().map_err(Into::into)
@@ -150,7 +154,7 @@ impl<'ctx> BatteryConservationController<'ctx> {
 
     /// Enable battery conservation, switching off rapid charge if it is enabled.
     pub fn enable_switch(&mut self) -> acpi_call::Result<()> {
-        let mut rapid_charge = self.context.profile.rapid_charge();
+        let mut rapid_charge = self.context.controllers().rapid_charge();
 
         if rapid_charge.enabled()? {
             rapid_charge.disable()?;

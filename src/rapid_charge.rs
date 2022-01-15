@@ -70,7 +70,7 @@ impl<'ctx> RapidChargeController<'ctx> {
     /// Enable battery conservation, returning an [`Error::BatteryConservationEnabled`] if rapid
     /// charge is already enabled.
     pub fn enable_error(&mut self) -> Result<()> {
-        if self.context.profile.battery_conservation().enabled()? {
+        if self.context.controllers().battery_conservation().enabled()? {
             Err(Error::BatteryConservationEnabled)
         } else {
             self.enable_ignore().map_err(Into::into)
@@ -79,7 +79,7 @@ impl<'ctx> RapidChargeController<'ctx> {
 
     /// Enable rapid charge, switching off battery conservation if it is enabled.
     pub fn enable_switch(&mut self) -> acpi_call::Result<()> {
-        let mut battery_conservation = self.context.profile.battery_conservation();
+        let mut battery_conservation = self.context.controllers().battery_conservation();
 
         if battery_conservation.enabled()? {
             battery_conservation.disable()?
