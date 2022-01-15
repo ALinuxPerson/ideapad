@@ -31,6 +31,7 @@ pub trait ThreadSafeWrite: ThreadSafe + Write {}
 
 impl<T: ThreadSafe + Write> ThreadSafeWrite for T {}
 
+/// Signifies that you can get an error from the implementing type.
 pub trait CouldHandleError<E: Error> {
     fn get(self) -> Result<(), E>;
 }
