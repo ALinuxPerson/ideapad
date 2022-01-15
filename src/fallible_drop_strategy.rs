@@ -31,16 +31,36 @@ pub trait ThreadSafeWrite: ThreadSafe + Write {}
 
 impl<T: ThreadSafe + Write> ThreadSafeWrite for T {}
 
+pub trait CouldHandleError<E: Error> {
+    fn get(self) -> Result<(), E>;
+}
+
+impl<E: Error> CouldHandleError<E> for Result<(), E> {
+    fn get(self) -> Result<(), E> {
+        self
+    }
+}
+
+impl<F, E> CouldHandleError<E> for F
+where
+    F: FnOnce() -> Result<(), E>,
+    E: Error,
+{
+    fn get(self) -> Result<(), E> {
+        self()
+    }
+}
+
 /// This trait indicates that a structure can be used to handle errors that occur from drops.
 pub trait FallibleDropStrategy: ThreadSafe {
     /// What to do on an error on a drop.
     fn on_error<E: Error>(&self, error: E);
-    fn handle_error<F, E>(&self, f: F)
+    fn handle_error<T, E>(&self, item: T)
     where
-        F: FnOnce() -> Result<(), E>,
+        T: CouldHandleError<E>,
         E: Error,
     {
-        if let Err(error) = f() {
+        if let Err(error) = item.get() {
             self.on_error(error)
         }
     }
