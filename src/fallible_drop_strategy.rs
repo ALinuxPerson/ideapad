@@ -15,7 +15,7 @@
 //! You may also implement your own fallible drop strategy and set it as the global drop strategy
 //! via the [`FallibleDropStrategy`] trait and the [`set`] method.
 
-use parking_lot::{Mutex, RwLock};
+use parking_lot::Mutex;
 use std::error::Error;
 use std::io::Write;
 use std::ops::Deref;
@@ -33,8 +33,10 @@ impl<T: ThreadSafe + Write> ThreadSafeWrite for T {}
 
 /// Signifies that you can get an error from the implementing type.
 pub trait CouldGetError {
+    /// The error returned by [`Self::get`].
     type Error: Error;
 
+    /// Gets the error.
     fn get(self) -> Result<(), Self::Error>;
 }
 
@@ -179,7 +181,7 @@ impl Write for DynWriter {
     }
 }
 
-pub struct DynToGenericFallibleDropStrategyAdapter<'a>(pub &'a dyn DynFallibleDropStrategy);
+struct DynToGenericFallibleDropStrategyAdapter<'a>(pub &'a dyn DynFallibleDropStrategy);
 
 impl<'a> FallibleDropStrategy for DynToGenericFallibleDropStrategyAdapter<'a> {
     fn on_error<E: Error>(&self, error: E) {
