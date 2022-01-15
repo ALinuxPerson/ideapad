@@ -158,14 +158,6 @@ impl<'ctx> BatteryConservationController<'ctx> {
         self.get().map(|enabled| !enabled)
     }
 
-    /// Ensures that the battery conservation mode is enabled for this scope.
-    pub fn enable_guard<'bc>(
-        &'bc mut self,
-        handler: Handler,
-    ) -> Result<BatteryConservationEnableGuard<'bc, 'ctx>> {
-        BatteryConservationEnableGuard::handler(self, handler)
-    }
-
     /// Ensures that the battery conservation mode is disabled for this scope.
     pub fn disable_guard<'bc>(
         &'bc mut self,
