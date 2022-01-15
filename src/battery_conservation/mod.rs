@@ -15,9 +15,13 @@ use crate::fallible_drop_strategy::{
 use crate::Handler;
 pub use enable::EnableBatteryConservationBuilder;
 use thiserror::Error;
+use crate::battery::{Controller, EnableGuard};
+use crate::battery::enable::{EnableBuilder, Stage};
 
 /// Handy wrapper for [`Error`].
 pub type Result<T, E = Error> = std::result::Result<T, E>;
+
+pub type BatteryConservationEnableBuilder<'ctrl, 'ctx, S> = EnableBuilder<'ctrl, 'ctx, S, BatteryConservationController<'ctx>>;
 
 /// Bad things that could happen when dealing with battery conservation mode.
 #[derive(Debug, Error)]
@@ -41,11 +45,11 @@ pub enum Error {
 
 /// "Guarantees" that the battery conservation mode is enabled for the scope.
 #[must_use]
-pub struct BatteryConservationEnableGuard<'bc, 'ctx> {
+pub struct BatteryConservationEnableGuard<'bc, 'ctx: 'bc> {
     controller: &'bc mut BatteryConservationController<'ctx>,
 }
 
-impl<'bc, 'ctx> BatteryConservationEnableGuard<'bc, 'ctx> {
+impl<'bc, 'ctx: 'bc> BatteryConservationEnableGuard<'bc, 'ctx> {
     /// Enable battery conservation mode for the scope with the specified handler.
     pub fn handler(
         controller: &'bc mut BatteryConservationController<'ctx>,
@@ -91,6 +95,14 @@ impl<'bc, 'ctx> BatteryConservationDisableGuard<'bc, 'ctx> {
 
     fn fallible_drop_strategy(&self) -> &'ctx FallibleDropStrategies {
         self.controller.context.fallible_drop_strategy()
+    }
+}
+
+impl<'bc, 'ctx: 'bc> EnableGuard<'bc, 'ctx, BatteryConservationController<'ctx>> for BatteryConservationEnableGuard<'bc, 'ctx> {
+    type Error = Error;
+
+    fn new(controller: &'bc mut BatteryConservationController<'ctx>, handler: Handler) -> Result<Self, Self::Error> {
+        Self::handler(controller, handler)
     }
 }
 
@@ -214,6 +226,23 @@ impl<'ctx> BatteryConservationController<'ctx> {
         handler: Handler,
     ) -> acpi_call::Result<BatteryConservationDisableGuard<'bc, 'ctx>> {
         BatteryConservationDisableGuard::new(self, handler)
+    }
+}
+
+impl<'this, 'ctx: 'this> Controller<'this, 'ctx> for BatteryConservationController<'ctx> {
+    type EnableGuard = BatteryConservationEnableGuard<'this, 'ctx>;
+    type EnableError = Error;
+
+    fn enable_ignore(&mut self) -> acpi_call::Result<()> {
+        todo!()
+    }
+
+    fn enable_error(&mut self) -> Result<(), Self::EnableError> {
+        todo!()
+    }
+
+    fn enable_switch(&mut self) -> acpi_call::Result<()> {
+        todo!()
     }
 }
 
