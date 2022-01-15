@@ -12,6 +12,7 @@ extern crate serde;
 #[macro_use]
 pub mod macros;
 
+#[cfg(any(feature = "battery_conservation", feature = "rapid_charge", feature = "system_performance"))]
 pub mod acpi_call;
 
 #[cfg(any(feature = "battery_conservation", feature = "rapid_charge"))]
@@ -31,7 +32,6 @@ pub mod rapid_charge;
 #[cfg(feature = "system_performance")]
 pub mod system_performance;
 
-
 use crate::context::Context;
 pub use prelude::*;
 
@@ -48,6 +48,7 @@ pub fn context() -> profile::Result<Context> {
 /// Handlers which determine what to do when battery conservation and rapid charge modes conflict.
 #[derive(Debug, Copy, Clone, Ord, PartialOrd, Eq, PartialEq, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg(any(feature = "battery_conservation", feature = "rapid_charge"))]
 pub enum Handler {
     /// Ignore the conflict and continue with the current mode.
     Ignore,

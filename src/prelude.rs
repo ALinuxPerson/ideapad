@@ -13,7 +13,7 @@ pub use crate::{
     profile::{
         Error as ProfileError,
         Profile,
-        Result as ProfileResult
+        Result as ProfileResult,
     },
     Handler,
 };
