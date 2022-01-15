@@ -147,6 +147,7 @@ pub mod enable {
     }
 }
 
+pub use enable::EnableBatteryConservationBuilder;
 use crate::acpi_call::{self, acpi_call, acpi_call_expect_valid};
 use crate::profile::Profile;
 use crate::Handler;
@@ -242,6 +243,11 @@ impl<'p> BatteryConservationController<'p> {
     /// Create a new battery conservation controller.
     pub const fn new(profile: &'p Profile) -> Self {
         Self { profile }
+    }
+
+    /// Builder for enabling battery conservation.
+    pub fn enable<'bc>(&'bc mut self) -> EnableBatteryConservationBuilder<'bc, 'p, enable::Begin> {
+        EnableBatteryConservationBuilder::new(self)
     }
 
     /// Enable battery conservation with the specified [`Handler`].
