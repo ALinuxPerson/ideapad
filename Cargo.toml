@@ -14,7 +14,7 @@ tap = "1.0.1"
 thiserror = "1.0.30"
 
 [features]
-default = ["core", "profiles", "macros"]
+default = ["core", "profiles", "macros", "fallible_drop_strategies"]
 
 # core
 core = ["battery_conservation", "rapid_charge", "system_performance"]
@@ -31,6 +31,13 @@ ideapad_amd = []
 macros = ["borrowed_cow_array", "borrowed_cow_vec"]
 borrowed_cow_array = []
 borrowed_cow_vec = []
+
+# fallible_drop_strategies
+fallible_drop_strategies = ["log_to_writer_on_error", "panic_on_error", "exit_on_error", "do_nothing_on_error"]
+log_to_writer_on_error = []
+panic_on_error = []
+exit_on_error = []
+do_nothing_on_error = []
 
 [dev-dependencies]
 serial_test = "0.5.1"
