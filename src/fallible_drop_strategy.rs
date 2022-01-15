@@ -27,8 +27,10 @@ pub trait ThreadSafe: Send + Sync {}
 impl<T: Send + Sync> ThreadSafe for T {}
 
 /// Marker trait which indicates that the implementing types can be written to and is thread safe.
+#[cfg(feature = "log_to_writer_on_error")]
 pub trait ThreadSafeWrite: ThreadSafe + Write {}
 
+#[cfg(feature = "log_to_writer_on_error")]
 impl<T: ThreadSafe + Write> ThreadSafeWrite for T {}
 
 /// Signifies that you can get an error from the implementing type.
@@ -86,10 +88,12 @@ impl<FDS: FallibleDropStrategy> DynFallibleDropStrategy for FDS {
 }
 
 /// A [`FallibleDropStrategy`] that logs to a specified writer on error.
+#[cfg(feature = "log_to_writer_on_error")]
 pub struct LogToWriterOnError<W: ThreadSafeWrite> {
     writer: Mutex<W>,
 }
 
+#[cfg(feature = "log_to_writer_on_error")]
 impl<W: ThreadSafeWrite> LogToWriterOnError<W> {
     /// Logs to the specified writer on error.
     pub fn new(writer: W) -> Self {
@@ -99,6 +103,7 @@ impl<W: ThreadSafeWrite> LogToWriterOnError<W> {
     }
 }
 
+#[cfg(feature = "log_to_writer_on_error")]
 impl<W: ThreadSafeWrite> FallibleDropStrategy for LogToWriterOnError<W> {
     fn on_error<E: Error>(&self, error: E) {
         let _ = writeln!(self.writer.lock(), "error: {error}");
@@ -134,6 +139,7 @@ impl FallibleDropStrategy for DoNothingOnError {
 }
 
 /// A writer which attempts to use the most common variants if possible.
+#[cfg(feature = "log_to_writer_on_error")]
 pub enum DynWriter {
     /// A standard output writer.
     Stdout(io::Stdout),
@@ -145,6 +151,7 @@ pub enum DynWriter {
     Custom(Box<dyn ThreadSafeWrite>),
 }
 
+#[cfg(feature = "log_to_writer_on_error")]
 impl DynWriter {
     /// Creates a new standard output writer.
     pub fn stdout() -> Self {
@@ -162,6 +169,7 @@ impl DynWriter {
     }
 }
 
+#[cfg(feature = "log_to_writer_on_error")]
 impl Write for DynWriter {
     fn write(&mut self, buf: &[u8]) -> io::Result<usize> {
         match self {
@@ -192,6 +200,7 @@ impl<'a> FallibleDropStrategy for DynToGenericFallibleDropStrategyAdapter<'a> {
 /// [`FallibleDropStrategy`] in case you need to do something more specific.
 pub enum FallibleDropStrategies {
     /// A [`FallibleDropStrategy`] that logs to a specified writer on error.
+    #[cfg(feature = "log_to_writer_on_error")]
     LogToWriterOnError(LogToWriterOnError<DynWriter>),
 
     /// A [`FallibleDropStrategy`] that panics on error.
@@ -215,16 +224,19 @@ impl FallibleDropStrategies {
     pub const DO_NOTHING_ON_ERROR: Self = Self::DoNothingOnError(DoNothingOnError);
 
     /// A fallible drop strategy which logs to a specified writer on error.
+    #[cfg(feature = "log_to_writer_on_error")]
     pub fn log_to_writer_on_error<W: ThreadSafeWrite + 'static>(writer: W) -> Self {
         Self::LogToWriterOnError(LogToWriterOnError::new(DynWriter::custom(writer)))
     }
 
     /// A fallible drop strategy which logs to standard output on error.
+    #[cfg(feature = "log_to_writer_on_error")]
     pub fn log_to_stdout_on_error() -> Self {
         Self::LogToWriterOnError(LogToWriterOnError::new(DynWriter::stdout()))
     }
 
     /// A fallible drop strategy which logs to standard error on error.
+    #[cfg(feature = "log_to_writer_on_error")]
     pub fn log_to_stderr_on_error() -> Self {
         Self::LogToWriterOnError(LogToWriterOnError::new(DynWriter::stderr()))
     }
@@ -257,15 +269,21 @@ impl FallibleDropStrategies {
 
 impl Default for FallibleDropStrategies {
     fn default() -> Self {
-        FallibleDropStrategies::LogToWriterOnError(LogToWriterOnError::new(DynWriter::Stderr(
-            io::stderr(),
-        )))
+        #[cfg(feature = "log_to_writer_on_error")]
+        {
+            Self::log_to_stderr_on_error()
+        }
+        #[cfg(not(feature = "log_to_writer_on_error"))]
+        {
+            Self::do_nothing_on_error()
+        }
     }
 }
 
 impl FallibleDropStrategy for FallibleDropStrategies {
     fn on_error<E: Error>(&self, error: E) {
         match self {
+            #[cfg(feature = "log_to_writer_on_error")]
             FallibleDropStrategies::LogToWriterOnError(strategy) => {
                 FallibleDropStrategy::on_error(strategy, error)
             }
