@@ -5,6 +5,88 @@
 //! disabled then enable it, the battery level will be capped at the level you enabled battery
 //! conservation mode at. For example, if you charge your battery to 80% and then enable battery
 //! conservation mode, the battery level will be capped at 80%.
+pub mod enable {
+    mod private {
+        pub trait Sealed {}
+    }
+
+    use crate::{BatteryConservationController, Handler};
+    use crate::acpi_call::{acpi_call, self};
+    use crate::battery_conservation::BatteryConservationEnableGuard;
+
+    pub trait Stage: private::Sealed {}
+
+    pub struct Begin;
+
+    impl Stage for Begin {}
+    impl private::Sealed for Begin {}
+
+    pub struct Call {
+        pub handler: Handler,
+    }
+
+    impl Stage for Call {}
+    impl private::Sealed for Call {}
+
+    pub struct EnableBatteryConservationBuilder<'bc, 'p, S: Stage> {
+        pub controller: &'bc mut BatteryConservationController<'p>,
+        stage: S,
+    }
+
+    impl<'bc, 'p> EnableBatteryConservationBuilder<'bc, 'p, Begin> {
+        pub fn new(controller: &'bc mut BatteryConservationController<'p>) -> Self {
+            Self { controller, stage: Begin }
+        }
+    }
+
+    impl<'bc, 'p> EnableBatteryConservationBuilder<'bc, 'p, Call> {
+        pub const fn handler(&self) -> Handler {
+            self.stage.handler
+        }
+
+        pub fn guard(self) -> super::Result<BatteryConservationEnableGuard<'bc, 'p>> {
+            BatteryConservationEnableGuard::handler(self.controller, self.handler())
+        }
+
+        pub fn now(self) -> super::Result<()> {
+            match self.handler() {
+                Handler::Ignore => enable_ignore(self.controller).map_err(Into::into),
+                Handler::Error => enable_error(self.controller),
+                Handler::Switch => enable_switch(self.controller).map_err(Into::into),
+            }
+        }
+    }
+
+    pub fn enable_ignore(controller: &mut BatteryConservationController) -> acpi_call::Result<()> {
+        acpi_call(
+            controller.profile.battery.set_command.to_string(),
+            [controller.profile.battery.conservation.parameters.enable],
+        )?;
+
+        Ok(())
+    }
+
+    /// Enable battery conservation, returning an [`Error::RapidChargeEnabled`] if rapid charge is
+    /// already enabled.
+    pub fn enable_error(controller: &mut BatteryConservationController) -> super::Result<()> {
+        if controller.profile.rapid_charge().enabled()? {
+            Err(super::Error::RapidChargeEnabled)
+        } else {
+            enable_ignore(controller).map_err(Into::into)
+        }
+    }
+
+    /// Enable battery conservation, switching off rapid charge if it is enabled.
+    pub fn enable_switch(controller: &mut BatteryConservationController) -> acpi_call::Result<()> {
+        let mut rapid_charge = controller.profile.rapid_charge();
+
+        if rapid_charge.enabled()? {
+            rapid_charge.disable()?;
+        }
+
+        enable_ignore(controller)
+    }
+}
 
 use crate::acpi_call::{self, acpi_call, acpi_call_expect_valid};
 use crate::profile::Profile;
