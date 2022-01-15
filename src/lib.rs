@@ -19,6 +19,7 @@ pub mod prelude;
 pub mod profile;
 pub mod rapid_charge;
 pub mod system_performance;
+pub mod context;
 
 #[cfg(test)]
 mod battery_conservation_rapid_charge_shared_tests;
