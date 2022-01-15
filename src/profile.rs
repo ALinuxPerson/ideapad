@@ -427,6 +427,7 @@ impl Profile {
     /// \_SB.PCI0.LPC0.EC0.VPC0.DYTC
     ///              ^
     /// ```
+    #[cfg(feature = "ideapad_15iil05")]
     pub const IDEAPAD_15IIL05: Self = Self::r#static(
         "IDEAPAD_15IIL05",
         borrowed_cow_array!["81YK"],
@@ -454,6 +455,7 @@ impl Profile {
 
     /// Default profile for the Ideapad AMD model. For the main differences between this and
     /// [`IDEAPAD_15IIL05`](Self::IDEAPAD_15IIL05), see it's respective documentation.
+    #[cfg(feature = "ideapad_amd")]
     pub const IDEAPAD_AMD: Self = Self::r#static(
         "IDEAPAD_AMD",
         borrowed_cow_array!["81YQ", "81YM"],
@@ -537,7 +539,13 @@ impl Profile {
     }
 
     /// Default search path for profiles.
-    pub const SEARCH_PATH: &'static [Self] = &[Self::IDEAPAD_15IIL05, Self::IDEAPAD_AMD];
+    pub const SEARCH_PATH: &'static [Self] = &[
+        #[cfg(feature = "ideapad_15iil05")]
+        Self::IDEAPAD_15IIL05,
+
+        #[cfg(feature = "ideapad_amd")]
+        Self::IDEAPAD_AMD,
+    ];
 
     /// Find the appropriate profile with the default search path.
     pub fn find() -> Result<Self> {
