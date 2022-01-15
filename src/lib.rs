@@ -14,13 +14,22 @@ pub mod macros;
 
 pub mod acpi_call;
 pub mod battery;
+
+#[cfg(feature = "battery_conservation")]
 pub mod battery_conservation;
+
 pub mod context;
 pub mod fallible_drop_strategy;
 pub mod prelude;
 pub mod profile;
+
+#[cfg(feature = "rapid_charge")]
 pub mod rapid_charge;
+
+#[cfg(feature = "system_performance")]
 pub mod system_performance;
+
+
 use crate::context::Context;
 pub use prelude::*;
 
