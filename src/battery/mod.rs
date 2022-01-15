@@ -1,10 +1,12 @@
 //! Shared contents between [`crate::battery_conservation`] and [`crate::rapid_charge`].
 use std::error::Error;
 use crate::{acpi_call, Handler};
+use std::mem::needs_drop;
 
 pub mod enable;
 
 #[doc(hidden)]
+#[allow(drop_bounds)]
 pub trait BatteryEnableGuard<'ctrl, 'ctx: 'ctrl, C: BatteryController<'ctrl, 'ctx>>: Drop + Sized {
     type Error: Error;
 
