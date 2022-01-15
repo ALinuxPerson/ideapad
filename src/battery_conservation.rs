@@ -261,7 +261,9 @@ mod tests {
 
         // let's test first with ignorance
         rapid_charge
-            .enable_with_handler(Handler::Ignore)
+            .enable()
+            .handler(Handler::Ignore)
+            .now()
             .expect("rapid charge enable failed");
 
         assert!(
@@ -289,7 +291,9 @@ mod tests {
             .expect("failed to enable battery conservation");
 
         let error = rapid_charge
-            .enable_with_handler(Handler::Error)
+            .enable()
+            .handler(Handler::Error)
+            .now()
             .expect_err("rapid charge enable succeeded");
         assert!(matches!(
             error,
@@ -301,7 +305,9 @@ mod tests {
 
         // now let's test with a switch handler
         rapid_charge
-            .enable_with_handler(Handler::Switch)
+            .enable()
+            .handler(Handler::Switch)
+            .now()
             .expect("rapid charge enable failed");
         assert!(rapid_charge
             .enabled()
