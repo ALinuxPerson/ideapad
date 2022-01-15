@@ -101,7 +101,7 @@ impl<W: ThreadSafeWrite> LogToWriterOnError<W> {
 }
 
 impl<W: ThreadSafeWrite> FallibleDropStrategy for LogToWriterOnError<W> {
-    fn on_error<E: Error>(&self, _error: E) {
+    fn on_error<E: Error>(&self, error: E) {
         let _ = writeln!(self.writer.lock(), "error: {error}");
     }
 }
@@ -110,7 +110,7 @@ impl<W: ThreadSafeWrite> FallibleDropStrategy for LogToWriterOnError<W> {
 pub struct PanicOnError;
 
 impl FallibleDropStrategy for PanicOnError {
-    fn on_error<E: Error>(&self, _error: E) {
+    fn on_error<E: Error>(&self, error: E) {
         panic!("{error}")
     }
 }
