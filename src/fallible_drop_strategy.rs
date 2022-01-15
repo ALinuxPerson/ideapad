@@ -110,7 +110,7 @@ impl<W: ThreadSafeWrite> FallibleDropStrategy for LogToWriterOnError<W> {
 pub struct PanicOnError;
 
 impl FallibleDropStrategy for PanicOnError {
-    fn on_error<E: Error>(&self, error: E) {
+    fn on_error<E: Error>(&self, _error: E) {
         panic!("{error}")
     }
 }
