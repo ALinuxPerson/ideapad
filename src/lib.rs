@@ -13,6 +13,8 @@ extern crate serde;
 pub mod macros;
 
 pub mod acpi_call;
+
+#[cfg(any(feature = "battery_conservation", feature = "rapid_charge"))]
 pub mod battery;
 
 #[cfg(feature = "battery_conservation")]
