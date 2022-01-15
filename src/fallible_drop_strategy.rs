@@ -108,6 +108,20 @@ pub enum DynWriter {
     Custom(Box<dyn ThreadSafeWrite>),
 }
 
+impl DynWriter {
+    pub fn stdout() -> Self {
+        Self::Stdout(io::stdout())
+    }
+
+    pub fn stderr() -> Self {
+        Self::Stderr(io::stderr())
+    }
+
+    pub fn custom<W: ThreadSafeWrite + 'static>(writer: W) -> Self {
+        Self::Custom(Box::new(writer))
+    }
+}
+
 impl Write for DynWriter {
     fn write(&mut self, buf: &[u8]) -> io::Result<usize> {
         match self {
@@ -140,6 +154,43 @@ pub enum FallibleDropStrategies {
     ExitOnError(ExitOnError),
     DoNothingOnError(DoNothingOnError),
     Custom(Box<dyn DynFallibleDropStrategy>),
+}
+
+impl FallibleDropStrategies {
+    pub const PANIC_ON_ERROR: Self = Self::PanicOnError(PanicOnError);
+    pub const DO_NOTHING_ON_ERROR: Self = Self::DoNothingOnError(DoNothingOnError);
+
+    pub fn log_to_writer_on_error<W: ThreadSafeWrite + 'static>(writer: W) -> Self {
+        Self::LogToWriterOnError(LogToWriterOnError::new(DynWriter::custom(writer)))
+    }
+
+    pub fn log_to_stdout_on_error() -> Self {
+        Self::LogToWriterOnError(LogToWriterOnError::new(DynWriter::stdout()))
+    }
+
+    pub fn log_to_stderr_on_error() -> Self {
+        Self::LogToWriterOnError(LogToWriterOnError::new(DynWriter::stderr()))
+    }
+
+    pub const fn panic_on_error() -> Self {
+        Self::PANIC_ON_ERROR
+    }
+
+    pub const fn exit_with_code_on_error(exit_code: i32) -> Self {
+        Self::ExitOnError(ExitOnError { exit_code })
+    }
+
+    pub const fn exit_on_error() -> Self {
+        Self::exit_with_code_on_error(1)
+    }
+
+    pub const fn do_nothing_on_error() -> Self {
+        Self::DO_NOTHING_ON_ERROR
+    }
+
+    pub fn custom<T: DynFallibleDropStrategy + 'static>(fallible_drop_strategy: T) -> Self {
+        Self::Custom(Box::new(fallible_drop_strategy))
+    }
 }
 
 impl Default for FallibleDropStrategies {
