@@ -152,7 +152,7 @@ impl<'sp, 'ctx> SystemPerformanceGuard<'sp, 'ctx> {
 impl<'sp, 'p> Drop for SystemPerformanceGuard<'sp, 'p> {
     fn drop(&mut self) {
         self.fallible_drop_strategy()
-            .handle_error(|| self.controller.set(self.on_drop))
+            .handle_error(self.controller.set(self.on_drop))
     }
 }
 

@@ -63,7 +63,7 @@ impl<'bc, 'ctx> BatteryConservationEnableGuard<'bc, 'ctx> {
 
 impl<'bc, 'ctx> Drop for BatteryConservationEnableGuard<'bc, 'ctx> {
     fn drop(&mut self) {
-        self.fallible_drop_strategy().handle_error(|| self.controller.disable())
+        self.fallible_drop_strategy().handle_error(self.controller.disable())
     }
 }
 
@@ -95,7 +95,7 @@ impl<'bc, 'ctx> BatteryConservationDisableGuard<'bc, 'ctx> {
 
 impl<'bc, 'ctx> Drop for BatteryConservationDisableGuard<'bc, 'ctx> {
     fn drop(&mut self) {
-        self.fallible_drop_strategy().handle_error(|| self.controller.enable().handler(self.handler).now())
+        self.fallible_drop_strategy().handle_error(self.controller.enable().handler(self.handler).now())
     }
 }
 
