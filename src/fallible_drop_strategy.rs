@@ -19,7 +19,7 @@ use std::error::Error;
 use std::{io, process};
 use std::io::Write;
 use once_cell::sync::Lazy;
-use parking_lot::RwLock;
+use parking_lot::{RwLock, Mutex};
 
 static DROP_STRATEGY: Lazy<RwLock<Box<dyn DynFallibleDropStrategy>>> = Lazy::new(|| RwLock::new(Box::new(LogToWriterOnError::stderr())));
 
@@ -48,7 +48,7 @@ impl<FDS: FallibleDropStrategy> DynFallibleDropStrategy for FDS {
 
 /// A [`FallibleDropStrategy`] that logs to a specified writer on error.
 struct LogToWriterOnError<W: Write + ThreadSafe> {
-    writer: RwLock<W>,
+    writer: Mutex<W>,
 }
 
 impl LogToWriterOnError<io::Stderr> {
@@ -62,14 +62,14 @@ impl<W: Write + ThreadSafe> LogToWriterOnError<W> {
     /// Logs to the specified writer on error.
     pub fn new(writer: W) -> Self {
         Self {
-            writer: RwLock::new(writer),
+            writer: Mutex::new(writer),
         }
     }
 }
 
 impl<W: Write + ThreadSafe> FallibleDropStrategy for LogToWriterOnError<W> {
     fn on_error<E: Error>(&self, error: E) {
-        let _ = writeln!(self.writer.write(), "error: {error}");
+        let _ = writeln!(self.writer.lock(), "error: {error}");
     }
 }
 
