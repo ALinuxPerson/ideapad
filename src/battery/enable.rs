@@ -1,5 +1,5 @@
 use std::marker::PhantomData;
-use crate::battery::{Controller, EnableGuard};
+use crate::battery::{BatteryController, BatteryEnableGuard};
 use crate::context::Context;
 use crate::Handler;
 
@@ -33,13 +33,13 @@ impl Stage for Call {}
 
 impl private::Sealed for Call {}
 
-pub struct EnableBuilder<'ctrl, 'ctx: 'ctrl, S: Stage, C: Controller<'ctrl, 'ctx>> {
+pub struct EnableBuilder<'ctrl, 'ctx: 'ctrl, S: Stage, C: BatteryController<'ctrl, 'ctx>> {
     pub controller: &'ctrl mut C,
     stage: S,
     _marker: PhantomData<&'ctx Context>,
 }
 
-impl<'ctrl, 'ctx, C: Controller<'ctrl, 'ctx>> EnableBuilder<'ctrl, 'ctx, Begin, C> {
+impl<'ctrl, 'ctx, C: BatteryController<'ctrl, 'ctx>> EnableBuilder<'ctrl, 'ctx, Begin, C> {
     pub fn new(controller: &'ctrl mut C) -> Self {
         Self {
             controller,
@@ -69,12 +69,12 @@ impl<'ctrl, 'ctx, C: Controller<'ctrl, 'ctx>> EnableBuilder<'ctrl, 'ctx, Begin, 
     }
 }
 
-impl<'ctrl, 'ctx: 'ctrl, C: Controller<'ctrl, 'ctx>> EnableBuilder<'ctrl, 'ctx, Call, C> {
+impl<'ctrl, 'ctx: 'ctrl, C: BatteryController<'ctrl, 'ctx>> EnableBuilder<'ctrl, 'ctx, Call, C> {
     pub fn handler(&self) -> Handler {
         self.stage.handler
     }
 
-    pub fn guard(self) -> Result<C::EnableGuard, <C::EnableGuard as EnableGuard<'ctrl, 'ctx, C>>::Error> {
+    pub fn guard(self) -> Result<C::EnableGuard, <C::EnableGuard as BatteryEnableGuard<'ctrl, 'ctx, C>>::Error> {
         C::EnableGuard::new(self.controller, self.handler())
     }
 

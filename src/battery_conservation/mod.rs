@@ -15,7 +15,7 @@ use crate::fallible_drop_strategy::{
 use crate::Handler;
 pub use enable::EnableBatteryConservationBuilder;
 use thiserror::Error;
-use crate::battery::{Controller, EnableGuard};
+use crate::battery::{BatteryController, BatteryEnableGuard};
 use crate::battery::enable::{EnableBuilder, Stage};
 
 /// Handy wrapper for [`Error`].
@@ -98,7 +98,7 @@ impl<'bc, 'ctx> BatteryConservationDisableGuard<'bc, 'ctx> {
     }
 }
 
-impl<'bc, 'ctx: 'bc> EnableGuard<'bc, 'ctx, BatteryConservationController<'ctx>> for BatteryConservationEnableGuard<'bc, 'ctx> {
+impl<'bc, 'ctx: 'bc> BatteryEnableGuard<'bc, 'ctx, BatteryConservationController<'ctx>> for BatteryConservationEnableGuard<'bc, 'ctx> {
     type Error = Error;
 
     fn new(controller: &'bc mut BatteryConservationController<'ctx>, handler: Handler) -> Result<Self, Self::Error> {
@@ -229,7 +229,7 @@ impl<'ctx> BatteryConservationController<'ctx> {
     }
 }
 
-impl<'this, 'ctx: 'this> Controller<'this, 'ctx> for BatteryConservationController<'ctx> {
+impl<'this, 'ctx: 'this> BatteryController<'this, 'ctx> for BatteryConservationController<'ctx> {
     type EnableGuard = BatteryConservationEnableGuard<'this, 'ctx>;
     type EnableError = Error;
 
