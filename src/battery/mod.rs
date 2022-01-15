@@ -4,12 +4,14 @@ use crate::{acpi_call, Handler};
 
 pub mod enable;
 
+#[doc(hidden)]
 pub trait BatteryEnableGuard<'ctrl, 'ctx: 'ctrl, C: BatteryController<'ctrl, 'ctx>>: Drop + Sized {
     type Error: Error;
 
     fn new(controller: &'ctrl mut C, handler: Handler) -> Result<Self, Self::Error>;
 }
 
+#[doc(hidden)]
 pub trait BatteryController<'this, 'ctx: 'this>: Sized {
     type EnableGuard: BatteryEnableGuard<'this, 'ctx, Self>;
     type EnableError: Error + From<acpi_call::Error>;
