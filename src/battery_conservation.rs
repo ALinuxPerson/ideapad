@@ -18,6 +18,7 @@ use thiserror::Error;
 /// Handy wrapper for [`Error`].
 pub type Result<T, E = Error> = std::result::Result<T, E>;
 
+/// Builder for enabling battery conservation.
 pub type EnableBatteryConservationBuilder<'ctrl, 'ctx, S> =
     EnableBuilder<'ctrl, 'ctx, S, BatteryConservationController<'ctx>>;
 
@@ -111,6 +112,7 @@ impl<'bc, 'ctx> Drop for BatteryConservationDisableGuard<'bc, 'ctx> {
 /// Controller for battery conservation mode.
 #[derive(Copy, Clone)]
 pub struct BatteryConservationController<'ctx> {
+    /// A reference to the context.
     pub context: &'ctx Context,
 }
 
