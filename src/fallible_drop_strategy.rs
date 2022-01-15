@@ -15,11 +15,21 @@
 //! You may also implement your own fallible drop strategy and set it as the global drop strategy
 //! via the [`FallibleDropStrategy`] trait and the [`set`] method.
 
+#[cfg(feature = "log_to_writer_on_error")]
 use parking_lot::Mutex;
+
 use std::error::Error;
+
+#[cfg(feature = "log_to_writer_on_error")]
 use std::io::Write;
+
 use std::ops::Deref;
-use std::{io, process};
+
+#[cfg(feature = "log_to_writer_on_error")]
+use std::io;
+
+#[cfg(feature = "exit_on_error")]
+use std::process;
 
 /// Marker trait which indicates that the implementing type is thread safe.
 pub trait ThreadSafe: Send + Sync {}
