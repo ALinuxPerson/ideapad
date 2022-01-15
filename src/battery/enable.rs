@@ -1,3 +1,5 @@
+//! Abstractions for enabling a battery mode.
+
 use std::marker::PhantomData;
 use crate::battery::{BatteryController, BatteryEnableGuard};
 use crate::context::Context;
@@ -33,7 +35,11 @@ impl Stage for Call {}
 
 impl private::Sealed for Call {}
 
+/// A builder for enabling a battery mode.
+///
+/// This is common between rapid charge and battery conservation.
 pub struct EnableBuilder<'ctrl, 'ctx: 'ctrl, S: Stage, C: BatteryController<'ctrl, 'ctx>> {
+    /// A reference to the controller.
     pub controller: &'ctrl mut C,
     stage: S,
     _marker: PhantomData<&'ctx Context>,
