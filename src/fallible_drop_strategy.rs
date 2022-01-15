@@ -122,11 +122,13 @@ impl FallibleDropStrategy for PanicOnError {
 }
 
 /// A [`FallibleDropStrategy`] that exits with the specified `exit_code` on error.
+#[cfg(feature = "exit_on_error")]
 pub struct ExitOnError {
     /// The exit code to use.
     pub exit_code: i32,
 }
 
+#[cfg(feature = "exit_on_error")]
 impl FallibleDropStrategy for ExitOnError {
     fn on_error<E: Error>(&self, _error: E) {
         process::exit(self.exit_code)
@@ -210,6 +212,7 @@ pub enum FallibleDropStrategies {
     PanicOnError(PanicOnError),
 
     /// A [`FallibleDropStrategy`] that exits with the specified `exit_code` on error.
+    #[cfg(feature = "exit_on_error")]
     ExitOnError(ExitOnError),
 
     /// A [`FallibleDropStrategy`] that ignores errors.
@@ -252,11 +255,13 @@ impl FallibleDropStrategies {
     }
 
     /// A fallible drop strategy which exits with the specified `exit_code` on error.
+    #[cfg(feature = "exit_on_error")]
     pub const fn exit_with_code_on_error(exit_code: i32) -> Self {
         Self::ExitOnError(ExitOnError { exit_code })
     }
 
     /// A fallible drop strategy which exits with code 1 on error.
+    #[cfg(feature = "exit_on_error")]
     pub const fn exit_on_error() -> Self {
         Self::exit_with_code_on_error(1)
     }
@@ -297,9 +302,12 @@ impl FallibleDropStrategy for FallibleDropStrategies {
             FallibleDropStrategies::PanicOnError(strategy) => {
                 FallibleDropStrategy::on_error(strategy, error)
             }
+
+            #[cfg(feature = "exit_on_error")]
             FallibleDropStrategies::ExitOnError(strategy) => {
                 FallibleDropStrategy::on_error(strategy, error)
             }
+
             FallibleDropStrategies::DoNothingOnError(strategy) => {
                 FallibleDropStrategy::on_error(strategy, error)
             }
