@@ -31,6 +31,11 @@ use std::io;
 #[cfg(feature = "exit_on_error")]
 use std::process;
 
+#[cfg(feature = "send_errors_to_receiver_on_error")]
+use crossbeam::channel::{Receiver, Sender};
+
+use tap::Pipe;
+
 /// Marker trait which indicates that the implementing type is thread safe.
 pub trait ThreadSafe: Send + Sync {}
 
@@ -46,13 +51,13 @@ impl<T: ThreadSafe + Write> ThreadSafeWrite for T {}
 /// Signifies that you can get an error from the implementing type.
 pub trait CouldGetError {
     /// The error returned by [`Self::get`].
-    type Error: Error;
+    type Error: ThreadSafeError;
 
     /// Gets the error.
     fn get(self) -> Result<(), Self::Error>;
 }
 
-impl<E: Error> CouldGetError for Result<(), E> {
+impl<E: ThreadSafeError> CouldGetError for Result<(), E> {
     type Error = E;
 
     fn get(self) -> Result<(), Self::Error> {
@@ -63,7 +68,7 @@ impl<E: Error> CouldGetError for Result<(), E> {
 impl<F, E> CouldGetError for F
 where
     F: FnOnce() -> Result<(), E>,
-    E: Error,
+    E: ThreadSafeError,
 {
     type Error = E;
 
@@ -75,7 +80,7 @@ where
 /// This trait indicates that a structure can be used to handle errors that occur from drops.
 pub trait FallibleDropStrategy: ThreadSafe {
     /// What to do on an error on a drop.
-    fn on_error<E: Error>(&self, error: E);
+    fn on_error<E: ThreadSafeError>(&self, error: E);
 
     /// Handle an error on a drop.
     fn handle_error<T: CouldGetError>(&self, item: T) {
@@ -88,11 +93,11 @@ pub trait FallibleDropStrategy: ThreadSafe {
 /// Dynamically dispatched version of [`FallibleDropStrategy`].
 pub trait DynFallibleDropStrategy: ThreadSafe {
     /// Dynamically dispatched version of [`FallibleDropStrategy::on_error`].
-    fn on_error(&self, error: &dyn Error);
+    fn on_error(&self, error: &'static dyn ThreadSafeError);
 }
 
 impl<FDS: FallibleDropStrategy> DynFallibleDropStrategy for FDS {
-    fn on_error(&self, error: &dyn Error) {
+    fn on_error(&self, error: &'static dyn ThreadSafeError) {
         self.on_error(error)
     }
 }
@@ -202,11 +207,43 @@ impl Write for DynWriter {
     }
 }
 
+/// Signifies that the implementing type is an error type which can be safely sent and shared
+/// between threads safely which lives as long as the program.
+pub trait ThreadSafeError: ThreadSafe + Error + 'static {}
+
+impl<T: ThreadSafe + Error + 'static> ThreadSafeError for T {}
+
+/// A [`FallibleDropStrategy`] that sends error to a receiver on error.
+#[cfg(feature = "send_errors_to_receiver_on_error")]
+pub struct SendErrorsToReceiverOnError {
+    sender: Sender<Box<dyn ThreadSafeError>>,
+}
+
+#[cfg(feature = "send_errors_to_receiver_on_error")]
+impl SendErrorsToReceiverOnError {
+    /// Sends errors to the specified receiver on error. The first return value, is [`Self`], the
+    /// second return value is where you'll be receiving the errors.
+    pub fn new() -> (Self, Receiver<Box<dyn ThreadSafeError>>) {
+        let (sender, receiver) = crossbeam::channel::unbounded();
+        (Self { sender }, receiver)
+    }
+}
+
+#[cfg(feature = "send_errors_to_receiver_on_error")]
+impl FallibleDropStrategy for SendErrorsToReceiverOnError {
+    fn on_error<E: ThreadSafeError>(&self, error: E) {
+        let _ = self.sender.send(Box::new(error));
+    }
+}
+
 struct DynToGenericFallibleDropStrategyAdapter<'a>(pub &'a dyn DynFallibleDropStrategy);
 
 impl<'a> FallibleDropStrategy for DynToGenericFallibleDropStrategyAdapter<'a> {
-    fn on_error<E: Error>(&self, error: E) {
-        DynFallibleDropStrategy::on_error(self.0, &error)
+    fn on_error<E: ThreadSafeError>(&self, error: E) {
+        DynFallibleDropStrategy::on_error(
+            self.0,
+            Box::new(error).pipe(Box::leak) // hmmm
+        )
     }
 }
 
@@ -227,6 +264,10 @@ pub enum FallibleDropStrategies {
 
     /// A [`FallibleDropStrategy`] that ignores errors.
     DoNothingOnError(DoNothingOnError),
+
+    /// A [`FallibleDropStrategy`] that sends errors to a receiver on error.
+    #[cfg(feature = "send_errors_to_receiver_on_error")]
+    SendErrorsToReceiverOnError(SendErrorsToReceiverOnError),
 
     /// A custom [`FallibleDropStrategy`].
     Custom(Box<dyn DynFallibleDropStrategy>),
@@ -276,6 +317,13 @@ impl FallibleDropStrategies {
         Self::exit_with_code_on_error(1)
     }
 
+    /// A fallible drop strategy which sends errors to a receiver on error.
+    #[cfg(feature = "send_errors_to_receiver_on_error")]
+    pub fn send_errors_to_receiver_on_error() -> (Self, Receiver<Box<dyn ThreadSafeError>>) {
+        let (this, receiver) = SendErrorsToReceiverOnError::new();
+        (Self::SendErrorsToReceiverOnError(this), receiver)
+    }
+
     /// Returns [`Self::DO_NOTHING_ON_ERROR`].
     pub const fn do_nothing_on_error() -> Self {
         Self::DO_NOTHING_ON_ERROR
@@ -301,7 +349,7 @@ impl Default for FallibleDropStrategies {
 }
 
 impl FallibleDropStrategy for FallibleDropStrategies {
-    fn on_error<E: Error>(&self, error: E) {
+    fn on_error<E: ThreadSafeError>(&self, error: E) {
         match self {
             #[cfg(feature = "log_to_writer_on_error")]
             FallibleDropStrategies::LogToWriterOnError(strategy) => {
@@ -315,6 +363,11 @@ impl FallibleDropStrategy for FallibleDropStrategies {
 
             #[cfg(feature = "exit_on_error")]
             FallibleDropStrategies::ExitOnError(strategy) => {
+                FallibleDropStrategy::on_error(strategy, error)
+            }
+
+            #[cfg(feature = "send_errors_to_receiver_on_error")]
+            FallibleDropStrategies::SendErrorsToReceiverOnError(strategy) => {
                 FallibleDropStrategy::on_error(strategy, error)
             }
 
