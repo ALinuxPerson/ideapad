@@ -170,6 +170,7 @@ impl<'sp, 'p> Drop for SystemPerformanceGuard<'sp, 'p> {
 /// Controller for the system performance mode.
 #[derive(Copy, Clone)]
 pub struct SystemPerformanceController<'ctx> {
+    /// A reference to the context.
     pub context: &'ctx Context,
 }
 
@@ -236,6 +237,8 @@ impl<'ctx> SystemPerformanceController<'ctx> {
         Ok(spm_spmo)
     }
 
+    /// Get a guard that guarantees that the system performance mode will be set to the specified
+    /// system performance modes.
     pub fn guard<'sp>(
         &'sp mut self,
         on_init: SystemPerformanceMode,
@@ -244,6 +247,8 @@ impl<'ctx> SystemPerformanceController<'ctx> {
         SystemPerformanceGuard::new(self, on_init, on_drop)
     }
 
+    /// Get a guard that guarantees that the system performance mode will be set to the specified
+    /// system performance mode, setting back the old one when dropped.
     pub fn guard_for_this_scope<'sp>(&'sp mut self, mode: SystemPerformanceMode) -> Result<SystemPerformanceGuard<'sp, 'ctx>> {
         SystemPerformanceGuard::for_this_scope(self, mode)
     }
