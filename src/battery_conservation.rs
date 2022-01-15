@@ -14,15 +14,23 @@ pub mod enable {
     use crate::acpi_call::{acpi_call, self};
     use crate::battery_conservation::BatteryConservationEnableGuard;
 
+    /// A stage for the battery conservation enable builder.
     pub trait Stage: private::Sealed {}
 
+    /// The first stage.
+    ///
+    /// This stage is where you specify the handler.
     pub struct Begin;
 
     impl Stage for Begin {}
     impl private::Sealed for Begin {}
 
+    /// The second stage.
+    ///
+    /// This stage is where you call the specified method you want, either create an enable guard or
+    /// enable immediately.
     pub struct Call {
-        pub handler: Handler,
+        handler: Handler,
     }
 
     impl Stage for Call {}
