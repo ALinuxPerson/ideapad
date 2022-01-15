@@ -125,13 +125,18 @@ impl SystemPerformanceMode {
     }
 }
 
+/// Guarantees that a system performance mode will be used for a scope.
 #[must_use]
 pub struct SystemPerformanceGuard<'sp, 'ctx> {
+    /// A reference to the system performance controller.
     pub controller: &'sp mut SystemPerformanceController<'ctx>,
+
+    /// What will be the system performance mode on drop.
     pub on_drop: SystemPerformanceMode,
 }
 
 impl<'sp, 'ctx> SystemPerformanceGuard<'sp, 'ctx> {
+    /// Set the system performance mode for the scope.
     pub fn new(
         controller: &'sp mut SystemPerformanceController<'ctx>,
         on_init: SystemPerformanceMode,
