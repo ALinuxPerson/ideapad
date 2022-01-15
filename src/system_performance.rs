@@ -5,8 +5,7 @@
 use crate::acpi_call::{self, acpi_call, acpi_call_expect_valid};
 use crate::context::Context;
 use crate::fallible_drop_strategy::{FallibleDropStrategies, FallibleDropStrategy};
-use crate::profile::{Profile, SystemPerformanceBits, SystemPerformanceParameters};
-use crate::Handler;
+use crate::profile::{SystemPerformanceBits, SystemPerformanceParameters};
 use thiserror::Error;
 
 /// Handy wrapper for [`Error`].
@@ -254,12 +253,12 @@ impl<'ctx> SystemPerformanceController<'ctx> {
     }
 }
 
-// /// Uses the global profile. See [`SystemPerformanceController::get`] for documentation.
-// pub fn get() -> Result<SystemPerformanceMode> {
-//     Profile::get().system_performance().get()
-// }
-//
-// /// Uses the global profile. See [`SystemPerformanceController::set`] for documentation.
-// pub fn set(mode: SystemPerformanceMode) -> acpi_call::Result<()> {
-//     Profile::get().system_performance().set(mode)
-// }
+/// Get the system performance mode.
+pub fn get(context: &Context) -> Result<SystemPerformanceMode> {
+    context.controllers().system_performance().get()
+}
+
+/// Set the system performance mode to the specified mode.
+pub fn set(context: &Context, mode: SystemPerformanceMode) -> acpi_call::Result<()> {
+    context.controllers().system_performance().set(mode)
+}
