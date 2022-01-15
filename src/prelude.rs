@@ -1,7 +1,6 @@
 //! Most commonly used types.
 
 pub use crate::{
-    acpi_call::{Error as AcpiCallError, Result as AcpiCallResult},
     context::Context,
     fallible_drop_strategy::{
         DynFallibleDropStrategy,
@@ -15,7 +14,6 @@ pub use crate::{
         Profile,
         Result as ProfileResult,
     },
-    Handler,
 };
 
 #[cfg(feature = "battery_conservation")]
@@ -37,3 +35,9 @@ pub use crate::system_performance::{
     Error as SystemPerformanceModeError, Result as SystemPerformanceModeResult,
     SystemPerformanceController, SystemPerformanceMode,
 };
+
+#[cfg(any(feature = "battery_conservation", feature = "rapid_charge", feature = "system_performance"))]
+pub use crate::acpi_call::{Error as AcpiCallError, Result as AcpiCallResult};
+
+#[cfg(any(feature = "battery_conservation", feature = "rapid_charge"))]
+pub use crate::Handler;
