@@ -35,22 +35,22 @@ impl private::Sealed for Call {}
 /// Builder for enabling battery conservation.
 ///
 /// This builder is seperated into [`Stage`]s; see their documentation for details.
-pub struct EnableBatteryConservationBuilder<'bc, 'p, S: Stage> {
+pub struct EnableBatteryConservationBuilder<'bc, 'ctx, S: Stage> {
     /// A mutable reference to the battery conservation controller.
-    pub controller: &'bc mut BatteryConservationController<'p>,
+    pub controller: &'bc mut BatteryConservationController<'ctx>,
     stage: S,
 }
 
-impl<'bc, 'p> EnableBatteryConservationBuilder<'bc, 'p, Begin> {
+impl<'bc, 'ctx> EnableBatteryConservationBuilder<'bc, 'ctx, Begin> {
     /// Create a new builder for enabling battery conservation.
-    pub fn new(controller: &'bc mut BatteryConservationController<'p>) -> Self {
+    pub fn new(controller: &'bc mut BatteryConservationController<'ctx>) -> Self {
         Self { controller, stage: Begin { _priv: () } }
     }
 
     /// Enable battery conservation with the specified [`Handler`].
     ///
     /// For more information on what do the [`Handler`]s mean, see the [`Handler`] documentation.
-    pub fn handler(self, handler: Handler) -> EnableBatteryConservationBuilder<'bc, 'p, Call> {
+    pub fn handler(self, handler: Handler) -> EnableBatteryConservationBuilder<'bc, 'ctx, Call> {
         EnableBatteryConservationBuilder {
             controller: self.controller,
             stage: Call { handler }
@@ -68,13 +68,13 @@ impl<'bc, 'p> EnableBatteryConservationBuilder<'bc, 'p, Begin> {
     /// itself off when you enable battery conservation first **then** enable rapid charging.
     ///
     /// This is easily bypassed though by just re-enabling battery conservation afterwards.
-    pub fn ignore(self) -> EnableBatteryConservationBuilder<'bc, 'p, Call> {
+    pub fn ignore(self) -> EnableBatteryConservationBuilder<'bc, 'ctx, Call> {
         self.handler(Handler::Ignore)
     }
 
     /// Enable battery conservation, returning an [`Error::RapidChargeEnabled`] if rapid charge is
     /// already enabled.
-    pub fn error(self) -> EnableBatteryConservationBuilder<'bc, 'p, Call> {
+    pub fn error(self) -> EnableBatteryConservationBuilder<'bc, 'ctx, Call> {
         self.handler(Handler::Error)
     }
 
@@ -83,19 +83,19 @@ impl<'bc, 'p> EnableBatteryConservationBuilder<'bc, 'p, Begin> {
     /// # Quirks
     /// It seems like, that at least for the Ideapad 15IIL05, it does some form of this
     /// automatically. For more information, see [`Self::ignore`].
-    pub fn switch(self) -> EnableBatteryConservationBuilder<'bc, 'p, Call> {
+    pub fn switch(self) -> EnableBatteryConservationBuilder<'bc, 'ctx, Call> {
         self.handler(Handler::Switch)
     }
 }
 
-impl<'bc, 'p> EnableBatteryConservationBuilder<'bc, 'p, Call> {
+impl<'bc, 'ctx> EnableBatteryConservationBuilder<'bc, 'ctx, Call> {
     /// Get the handler specified.
     pub const fn handler(&self) -> Handler {
         self.stage.handler
     }
 
     /// Consume the builder to make a guard out of it.
-    pub fn guard(self) -> super::Result<BatteryConservationEnableGuard<'bc, 'p>> {
+    pub fn guard(self) -> super::Result<BatteryConservationEnableGuard<'bc, 'ctx>> {
         BatteryConservationEnableGuard::handler(self.controller, self.handler())
     }
 
@@ -122,7 +122,7 @@ fn enable_ignore(controller: &mut BatteryConservationController) -> acpi_call::R
 /// Enable battery conservation, returning an [`Error::RapidChargeEnabled`] if rapid charge is
 /// already enabled.
 fn enable_error(controller: &mut BatteryConservationController) -> super::Result<()> {
-    if controller.context.profile.rapid_charge().enabled()? {
+    if controller.context.controllers().rapid_charge().enabled()? {
         Err(super::Error::RapidChargeEnabled)
     } else {
         enable_ignore(controller).map_err(Into::into)
@@ -131,7 +131,7 @@ fn enable_error(controller: &mut BatteryConservationController) -> super::Result
 
 /// Enable battery conservation, switching off rapid charge if it is enabled.
 fn enable_switch(controller: &mut BatteryConservationController) -> acpi_call::Result<()> {
-    let mut rapid_charge = controller.context.profile.rapid_charge();
+    let mut rapid_charge = controller.context.controllers().rapid_charge();
 
     if rapid_charge.enabled()? {
         rapid_charge.disable()?;
