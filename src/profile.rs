@@ -3,8 +3,6 @@
 use crate::battery_conservation::BatteryConservationController;
 use crate::rapid_charge::RapidChargeController;
 use crate::SystemPerformanceController;
-use once_cell::sync::OnceCell;
-use parking_lot::{RwLock, RwLockReadGuard};
 use smbioslib::SMBiosSystemInformation;
 use std::borrow::Cow;
 use std::io;
@@ -12,8 +10,6 @@ use thiserror::Error;
 
 /// Handy wrapper for [`Error`].
 pub type Result<T, E = Error> = std::result::Result<T, E>;
-
-static PROFILE: OnceCell<RwLock<Profile>> = OnceCell::new();
 
 /// Bad things which could happen when dealing with [`Profile`]s.
 #[derive(Debug, Error)]
@@ -570,61 +566,6 @@ impl Profile {
             .ok_or(Error::NoValidProfileInSearchPath)
     }
 
-    /// Auto detect a profile, returning a read guard to it.
-    pub fn auto_detect() -> Result<RwLockReadGuard<'static, Self>> {
-        Self::initialize_with_search_path(Self::SEARCH_PATH.iter().cloned())
-    }
-
-    /// Initialize the global profile with the specified search path.
-    pub fn initialize_with_search_path(
-        search_path: impl IntoIterator<Item = Self>,
-    ) -> Result<RwLockReadGuard<'static, Self>> {
-        match PROFILE.get() {
-            Some(profile) => Ok(profile.read()),
-            None => {
-                let profile = Self::find_with_search_path(search_path)?;
-                let _ = PROFILE.set(RwLock::new(profile));
-                Ok(PROFILE.get().expect("PROFILE should be set").read())
-            }
-        }
-    }
-
-    /// Initialize the global profile with the specified profile.
-    pub fn initialize_with_profile(profile: Self) -> RwLockReadGuard<'static, Self> {
-        match PROFILE.get() {
-            Some(profile) => profile.read(),
-            None => {
-                let _ = PROFILE.set(RwLock::new(profile));
-                PROFILE.get().expect("PROFILE should be set").read()
-            }
-        }
-    }
-
-    /// Get the current global profile.
-    ///
-    /// # Panics
-    /// If the global profile has not been initialized, this function will panic.
-    pub fn get() -> RwLockReadGuard<'static, Self> {
-        PROFILE.get()
-            .expect("profile not initialized (tip: initialize it with the variety of methods in `Profile` or use `ideapad::initialize()` for defaults)")
-            .read()
-    }
-
-    /// Set the global profile.
-    pub fn set(this: Self) {
-        if let Err(this) = PROFILE.set(RwLock::new(this)) {
-            let this = this.into_inner();
-            let mut global_profile = PROFILE
-                .get()
-                .expect(
-                    "profile not initialized but why does `PROFILE.set(...)` return `Err(...)`?",
-                )
-                .write();
-
-            *global_profile = this
-        }
-    }
-
     /// Return a battery conservation controller.
     pub const fn battery_conservation(&self) -> BatteryConservationController {
         BatteryConservationController::new(self)
@@ -639,11 +580,6 @@ impl Profile {
     pub const fn system_performance(&self) -> SystemPerformanceController {
         SystemPerformanceController::new(self)
     }
-}
-
-/// Get the current global profile.
-pub fn get() -> RwLockReadGuard<'static, Profile> {
-    Profile::get()
 }
 
 mod tests {}
