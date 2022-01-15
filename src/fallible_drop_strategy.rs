@@ -30,6 +30,7 @@ pub trait ThreadSafe: Send + Sync {}
 
 impl<T: Send + Sync> ThreadSafe for T {}
 
+/// Marker trait which indicates that the implementing types can be written to and is thread safe.
 pub trait ThreadSafeWrite: ThreadSafe + Write {}
 
 impl<T: ThreadSafe + Write> ThreadSafeWrite for T {}
@@ -53,11 +54,11 @@ impl<FDS: FallibleDropStrategy> DynFallibleDropStrategy for FDS {
 }
 
 /// A [`FallibleDropStrategy`] that logs to a specified writer on error.
-struct LogToWriterOnError<W: Write + ThreadSafe> {
+struct LogToWriterOnError<W: ThreadSafeWrite> {
     writer: Mutex<W>,
 }
 
-impl<W: Write + ThreadSafe> LogToWriterOnError<W> {
+impl<W: ThreadSafeWrite> LogToWriterOnError<W> {
     /// Logs to the specified writer on error.
     pub fn new(writer: W) -> Self {
         Self {
@@ -66,7 +67,7 @@ impl<W: Write + ThreadSafe> LogToWriterOnError<W> {
     }
 }
 
-impl<W: Write + ThreadSafe> FallibleDropStrategy for LogToWriterOnError<W> {
+impl<W: ThreadSafeWrite> FallibleDropStrategy for LogToWriterOnError<W> {
     fn on_error<E: Error>(&self, error: E) {
         let _ = writeln!(self.writer.lock(), "error: {error}");
     }
