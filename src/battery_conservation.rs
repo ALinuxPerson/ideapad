@@ -56,7 +56,14 @@ pub mod enable {
         /// Enable battery conservation, ignoring if rapid charge is already enabled.
         ///
         /// # Note
-        /// Using this could drain your battery unnecessarily if rapid charge is enabled. Be careful!
+        /// Using this could drain your battery unnecessarily if rapid charge is enabled. Be
+        /// careful!
+        ///
+        /// # Quirks
+        /// It seems like, that at least for the Ideapad 15IIL05, that battery conservation switches
+        /// itself off when you enable battery conservation first **then** enable rapid charging.
+        ///
+        /// This is easily bypassed though by just re-enabling battery conservation afterwards.
         pub fn ignore(self) -> EnableBatteryConservationBuilder<'bc, 'p, Call> {
             self.handler(Handler::Ignore)
         }
@@ -68,6 +75,10 @@ pub mod enable {
         }
 
         /// Enable battery conservation, switching off rapid charge if it is enabled.
+        ///
+        /// # Quirks
+        /// It seems like, that at least for the Ideapad 15IIL05, it does some form of this
+        /// automatically. For more information, see [`Self::ignore`].
         pub fn switch(self) -> EnableBatteryConservationBuilder<'bc, 'p, Call> {
             self.handler(Handler::Switch)
         }
