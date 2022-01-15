@@ -9,9 +9,10 @@ pub mod enable;
 
 pub use enable::EnableBatteryConservationBuilder;
 use crate::acpi_call::{self, acpi_call, acpi_call_expect_valid};
-use crate::profile::Profile;
 use crate::Handler;
 use thiserror::Error;
+use crate::context::Context;
+use crate::fallible_drop_strategy::{DynFallibleDropStrategy, FallibleDropStrategies, FallibleDropStrategy};
 
 /// Handy wrapper for [`Error`].
 pub type Result<T, E = Error> = std::result::Result<T, E>;
@@ -37,76 +38,79 @@ pub enum Error {
 }
 
 /// "Guarantees" that the battery conservation mode is enabled for the scope.
-#[derive(Debug, Ord, PartialOrd, Eq, PartialEq, Hash)]
 #[must_use]
-pub struct BatteryConservationEnableGuard<'bc, 'p> {
-    controller: &'bc mut BatteryConservationController<'p>,
+pub struct BatteryConservationEnableGuard<'bc, 'ctx> {
+    controller: &'bc mut BatteryConservationController<'ctx>,
+    fallible_drop_strategy: &'ctx FallibleDropStrategies,
 }
 
-impl<'bc, 'p> BatteryConservationEnableGuard<'bc, 'p> {
+impl<'bc, 'ctx> BatteryConservationEnableGuard<'bc, 'ctx> {
     /// Enable battery conservation mode for the scope with the specified handler.
     pub fn handler(
-        controller: &'bc mut BatteryConservationController<'p>,
+        controller: &'bc mut BatteryConservationController<'ctx>,
         handler: Handler,
     ) -> Result<Self> {
         controller.enable_with_handler(handler)?;
 
-        Ok(Self { controller })
+        Ok(Self {
+            controller,
+            fallible_drop_strategy: controller.context.fallible_drop_strategy(),
+        })
     }
 }
 
-impl<'bc, 'p> Drop for BatteryConservationEnableGuard<'bc, 'p> {
+impl<'bc, 'ctx> Drop for BatteryConservationEnableGuard<'bc, 'ctx> {
     fn drop(&mut self) {
         crate::fallible_drop_strategy::handle_error(|| self.controller.disable())
     }
 }
 
 /// "Guarantees" that the battery conservation mode is disabled for the scope.
-#[derive(Debug, Ord, PartialOrd, Eq, PartialEq, Hash)]
 #[must_use]
-pub struct BatteryConservationDisableGuard<'bc, 'p> {
-    controller: &'bc mut BatteryConservationController<'p>,
+pub struct BatteryConservationDisableGuard<'bc, 'ctx> {
+    controller: &'bc mut BatteryConservationController<'ctx>,
+    fallible_drop_strategy: &'ctx FallibleDropStrategies,
     handler: Handler,
 }
 
-impl<'bc, 'p> BatteryConservationDisableGuard<'bc, 'p> {
+impl<'bc, 'ctx> BatteryConservationDisableGuard<'bc, 'ctx> {
     /// Disable battery conservation mode for the scope.
     pub fn new(
-        controller: &'bc mut BatteryConservationController<'p>,
+        controller: &'bc mut BatteryConservationController<'ctx>,
         handler: Handler,
     ) -> acpi_call::Result<Self> {
         controller.disable()?;
 
         Ok(Self {
             controller,
+            fallible_drop_strategy: controller.context.fallible_drop_strategy(),
             handler,
         })
     }
 }
 
-impl<'bc, 'p> Drop for BatteryConservationDisableGuard<'bc, 'p> {
+impl<'bc, 'ctx> Drop for BatteryConservationDisableGuard<'bc, 'ctx> {
     fn drop(&mut self) {
-        crate::fallible_drop_strategy::handle_error(|| {
-            self.controller.enable_with_handler(self.handler)
-        })
+        self.fallible_drop_strategy.handle_error(|| self.controller.enable().handler(self.handler).now())
     }
 }
 
 /// Controller for battery conservation mode.
-#[derive(Debug, Copy, Clone, Ord, PartialOrd, Eq, PartialEq, Hash)]
-pub struct BatteryConservationController<'p> {
-    /// Reference to the profile.
-    pub profile: &'p Profile,
+#[derive(Copy, Clone)]
+pub struct BatteryConservationController<'ctx> {
+    pub context: &'ctx Context,
 }
 
-impl<'p> BatteryConservationController<'p> {
+impl<'ctx> BatteryConservationController<'ctx> {
     /// Create a new battery conservation controller.
-    pub const fn new(profile: &'p Profile) -> Self {
-        Self { profile }
+    pub const fn new(context: &'ctx Context) -> Self {
+        Self {
+            context,
+        }
     }
 
     /// Builder for enabling battery conservation.
-    pub fn enable<'bc>(&'bc mut self) -> EnableBatteryConservationBuilder<'bc, 'p, enable::Begin> {
+    pub fn enable<'bc>(&'bc mut self) -> EnableBatteryConservationBuilder<'bc, 'ctx, enable::Begin> {
         EnableBatteryConservationBuilder::new(self)
     }
 
@@ -127,8 +131,8 @@ impl<'p> BatteryConservationController<'p> {
     /// Using this could drain your battery unnecessarily if rapid charge is enabled. Be careful!
     pub fn enable_ignore(&mut self) -> acpi_call::Result<()> {
         acpi_call(
-            self.profile.battery.set_command.to_string(),
-            [self.profile.battery.conservation.parameters.enable],
+            self.context.profile.battery.set_command.to_string(),
+            [self.context.profile.battery.conservation.parameters.enable],
         )?;
 
         Ok(())
@@ -137,7 +141,7 @@ impl<'p> BatteryConservationController<'p> {
     /// Enable battery conservation, returning an [`Error::RapidChargeEnabled`] if rapid charge is
     /// already enabled.
     pub fn enable_error(&mut self) -> Result<()> {
-        if self.profile.rapid_charge().enabled()? {
+        if self.context.profile.rapid_charge().enabled()? {
             Err(Error::RapidChargeEnabled)
         } else {
             self.enable_ignore().map_err(Into::into)
@@ -146,7 +150,7 @@ impl<'p> BatteryConservationController<'p> {
 
     /// Enable battery conservation, switching off rapid charge if it is enabled.
     pub fn enable_switch(&mut self) -> acpi_call::Result<()> {
-        let mut rapid_charge = self.profile.rapid_charge();
+        let mut rapid_charge = self.context.profile.rapid_charge();
 
         if rapid_charge.enabled()? {
             rapid_charge.disable()?;
@@ -158,8 +162,8 @@ impl<'p> BatteryConservationController<'p> {
     /// Disable battery conservation.
     pub fn disable(&mut self) -> acpi_call::Result<()> {
         acpi_call(
-            self.profile.battery.set_command.to_string(),
-            [self.profile.battery.conservation.parameters.disable],
+            self.context.profile.battery.set_command.to_string(),
+            [self.context.profile.battery.conservation.parameters.disable],
         )?;
 
         Ok(())
@@ -168,7 +172,7 @@ impl<'p> BatteryConservationController<'p> {
     /// Get the battery conservation status.
     pub fn get(&self) -> acpi_call::Result<bool> {
         let output = acpi_call_expect_valid(
-            self.profile.battery.conservation.get_command.to_string(),
+            self.context.profile.battery.conservation.get_command.to_string(),
             [],
         )?;
 
@@ -189,7 +193,7 @@ impl<'p> BatteryConservationController<'p> {
     pub fn enable_guard<'bc>(
         &'bc mut self,
         handler: Handler,
-    ) -> Result<BatteryConservationEnableGuard<'bc, 'p>> {
+    ) -> Result<BatteryConservationEnableGuard<'bc, 'ctx>> {
         BatteryConservationEnableGuard::handler(self, handler)
     }
 
@@ -197,7 +201,7 @@ impl<'p> BatteryConservationController<'p> {
     pub fn disable_guard<'bc>(
         &'bc mut self,
         handler: Handler,
-    ) -> acpi_call::Result<BatteryConservationDisableGuard<'bc, 'p>> {
+    ) -> acpi_call::Result<BatteryConservationDisableGuard<'bc, 'ctx>> {
         BatteryConservationDisableGuard::new(self, handler)
     }
 }
