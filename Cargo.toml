@@ -14,7 +14,8 @@ tap = "1.0.1"
 thiserror = "1.0.30"
 
 [features]
-default = ["battery_conservation", "rapid_charge", "system_performance", "profiles"]
+default = ["core", "profiles"]
+core = ["battery_conservation", "rapid_charge", "system_performance"]
 battery_conservation = []
 rapid_charge = []
 system_performance = []
