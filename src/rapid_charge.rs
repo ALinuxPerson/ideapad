@@ -120,45 +120,45 @@ impl<'p> RapidChargeController<'p> {
     }
 }
 
-/// Uses the global profile. See [`RapidChargeController::enable_with_handler`] for documentation.
-pub fn enable_with_handler(handler: Handler) -> Result<()> {
-    Profile::get().rapid_charge().enable_with_handler(handler)
-}
-
-/// Uses the global profile. See [`RapidChargeController::enable_switch`] for documentation.
-pub fn enable_switch() -> acpi_call::Result<()> {
-    Profile::get().rapid_charge().enable_switch()
-}
-
-/// Uses the global profile. See [`RapidChargeController::enable_ignore`] for documentation.
-pub fn enable_ignore() -> acpi_call::Result<()> {
-    Profile::get().rapid_charge().enable_ignore()
-}
-
-/// Uses the global profile. See [`RapidChargeController::enable_error`] for documentation.
-pub fn enable_error() -> Result<()> {
-    Profile::get().rapid_charge().enable_error()
-}
-
-/// Uses the global profile. See [`RapidChargeController::disable`] for documentation.
-pub fn disable() -> acpi_call::Result<()> {
-    Profile::get().rapid_charge().disable()
-}
-
-/// Uses the global profile. See [`RapidChargeController::get`] for documentation.
-pub fn get() -> acpi_call::Result<bool> {
-    Profile::get().rapid_charge().get()
-}
-
-/// Uses the global profile. See [`RapidChargeController::enabled`] for documentation.
-pub fn enabled() -> acpi_call::Result<bool> {
-    Profile::get().rapid_charge().enabled()
-}
-
-/// Uses the global profile. See [`RapidChargeController::disabled`] for documentation.
-pub fn disabled() -> acpi_call::Result<bool> {
-    Profile::get().rapid_charge().disabled()
-}
+// /// Uses the global profile. See [`RapidChargeController::enable_with_handler`] for documentation.
+// pub fn enable_with_handler(handler: Handler) -> Result<()> {
+//     Profile::get().rapid_charge().enable_with_handler(handler)
+// }
+//
+// /// Uses the global profile. See [`RapidChargeController::enable_switch`] for documentation.
+// pub fn enable_switch() -> acpi_call::Result<()> {
+//     Profile::get().rapid_charge().enable_switch()
+// }
+//
+// /// Uses the global profile. See [`RapidChargeController::enable_ignore`] for documentation.
+// pub fn enable_ignore() -> acpi_call::Result<()> {
+//     Profile::get().rapid_charge().enable_ignore()
+// }
+//
+// /// Uses the global profile. See [`RapidChargeController::enable_error`] for documentation.
+// pub fn enable_error() -> Result<()> {
+//     Profile::get().rapid_charge().enable_error()
+// }
+//
+// /// Uses the global profile. See [`RapidChargeController::disable`] for documentation.
+// pub fn disable() -> acpi_call::Result<()> {
+//     Profile::get().rapid_charge().disable()
+// }
+//
+// /// Uses the global profile. See [`RapidChargeController::get`] for documentation.
+// pub fn get() -> acpi_call::Result<bool> {
+//     Profile::get().rapid_charge().get()
+// }
+//
+// /// Uses the global profile. See [`RapidChargeController::enabled`] for documentation.
+// pub fn enabled() -> acpi_call::Result<bool> {
+//     Profile::get().rapid_charge().enabled()
+// }
+//
+// /// Uses the global profile. See [`RapidChargeController::disabled`] for documentation.
+// pub fn disabled() -> acpi_call::Result<bool> {
+//     Profile::get().rapid_charge().disabled()
+// }
 
 #[cfg(test)]
 mod tests {

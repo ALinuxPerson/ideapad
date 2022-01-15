@@ -222,12 +222,12 @@ impl<'p> SystemPerformanceController<'p> {
     }
 }
 
-/// Uses the global profile. See [`SystemPerformanceController::get`] for documentation.
-pub fn get() -> Result<SystemPerformanceMode> {
-    Profile::get().system_performance().get()
-}
-
-/// Uses the global profile. See [`SystemPerformanceController::set`] for documentation.
-pub fn set(mode: SystemPerformanceMode) -> acpi_call::Result<()> {
-    Profile::get().system_performance().set(mode)
-}
+// /// Uses the global profile. See [`SystemPerformanceController::get`] for documentation.
+// pub fn get() -> Result<SystemPerformanceMode> {
+//     Profile::get().system_performance().get()
+// }
+//
+// /// Uses the global profile. See [`SystemPerformanceController::set`] for documentation.
+// pub fn set(mode: SystemPerformanceMode) -> acpi_call::Result<()> {
+//     Profile::get().system_performance().set(mode)
+// }
