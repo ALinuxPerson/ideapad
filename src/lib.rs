@@ -14,6 +14,7 @@ pub mod macros;
 
 pub mod acpi_call;
 pub mod battery_conservation;
+pub mod battery;
 pub mod context;
 pub mod fallible_drop_strategy;
 pub mod prelude;
