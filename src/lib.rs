@@ -10,6 +10,7 @@ extern crate serial_test;
 extern crate serde;
 
 #[macro_use]
+#[cfg(any(feature = "borrowed_cow_vec", feature = "borrowed_cow_array"))]
 pub mod macros;
 
 #[cfg(any(feature = "battery_conservation", feature = "rapid_charge", feature = "system_performance"))]

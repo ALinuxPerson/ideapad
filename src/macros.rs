@@ -2,6 +2,7 @@
 
 /// Create a statically borrowed [`Cow`] array.
 #[macro_export]
+#[cfg(feature = "borrowed_cow_array")]
 macro_rules! borrowed_cow_array {
     () => {
         &[]
@@ -13,6 +14,7 @@ macro_rules! borrowed_cow_array {
 
 /// Create a statically borrowed [`Cow`] [`Vec`].
 #[macro_export]
+#[cfg(feature = "borrowed_cow_vec")]
 macro_rules! borrowed_cow_vec {
     () => {
         vec![]
