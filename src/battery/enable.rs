@@ -1,9 +1,9 @@
 //! Abstractions for enabling a battery mode.
 
-use std::marker::PhantomData;
 use crate::battery::{BatteryController, BatteryEnableGuard};
 use crate::context::Context;
 use crate::Handler;
+use std::marker::PhantomData;
 
 mod private {
     pub trait Sealed {}
@@ -88,7 +88,9 @@ impl<'ctrl, 'ctx: 'ctrl, C: BatteryController<'ctrl, 'ctx>> EnableBuilder<'ctrl,
     }
 
     /// Consume the builder, creating an enable guard from it.
-    pub fn guard(self) -> Result<C::EnableGuard, <C::EnableGuard as BatteryEnableGuard<'ctrl, 'ctx, C>>::Error> {
+    pub fn guard(
+        self,
+    ) -> Result<C::EnableGuard, <C::EnableGuard as BatteryEnableGuard<'ctrl, 'ctx, C>>::Error> {
         C::EnableGuard::new(self.controller, self.handler())
     }
 

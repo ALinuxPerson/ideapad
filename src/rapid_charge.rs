@@ -3,12 +3,12 @@
 //! Rapid charge charges your battery faster somehow.
 
 use crate::acpi_call::{self, acpi_call, acpi_call_expect_valid};
+use crate::battery::enable::{Begin, EnableBuilder};
+use crate::battery::{BatteryController, BatteryEnableGuard};
 use crate::context::Context;
+use crate::fallible_drop_strategy::{FallibleDropStrategies, FallibleDropStrategy};
 use crate::Handler;
 use thiserror::Error;
-use crate::battery::{BatteryController, BatteryEnableGuard};
-use crate::battery::enable::{Begin, EnableBuilder};
-use crate::fallible_drop_strategy::{FallibleDropStrategies, FallibleDropStrategy};
 
 /// Handy wrapper for [`Error`].
 pub type Result<T, E = Error> = std::result::Result<T, E>;
@@ -33,7 +33,8 @@ pub enum Error {
     BatteryConservationEnabled,
 }
 
-pub type EnableRapidChargeBuilder<'rc, 'ctx, S> = EnableBuilder<'rc, 'ctx, S, RapidChargeController<'ctx>>;
+pub type EnableRapidChargeBuilder<'rc, 'ctx, S> =
+    EnableBuilder<'rc, 'ctx, S, RapidChargeController<'ctx>>;
 
 pub struct RapidChargeEnableGuard<'rc, 'ctx: 'rc> {
     pub controller: &'rc mut RapidChargeController<'ctx>,
@@ -47,14 +48,20 @@ impl<'rc, 'ctx: 'rc> RapidChargeEnableGuard<'rc, 'ctx> {
 
 impl<'rc, 'ctx: 'rc> Drop for RapidChargeEnableGuard<'rc, 'ctx> {
     fn drop(&mut self) {
-        self.fallible_drop_strategy().handle_error(self.controller.disable())
+        self.fallible_drop_strategy()
+            .handle_error(self.controller.disable())
     }
 }
 
-impl<'rc, 'ctx: 'rc> BatteryEnableGuard<'rc, 'ctx, RapidChargeController<'ctx>> for RapidChargeEnableGuard<'rc, 'ctx> {
+impl<'rc, 'ctx: 'rc> BatteryEnableGuard<'rc, 'ctx, RapidChargeController<'ctx>>
+    for RapidChargeEnableGuard<'rc, 'ctx>
+{
     type Error = Error;
 
-    fn new(controller: &'rc mut RapidChargeController<'ctx>, handler: Handler) -> std::result::Result<Self, Self::Error> {
+    fn new(
+        controller: &'rc mut RapidChargeController<'ctx>,
+        handler: Handler,
+    ) -> std::result::Result<Self, Self::Error> {
         controller.enable().handler(handler).now()?;
         Ok(Self { controller })
     }

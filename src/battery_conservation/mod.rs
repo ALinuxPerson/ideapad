@@ -6,19 +6,20 @@
 //! conservation mode at. For example, if you charge your battery to 80% and then enable battery
 //! conservation mode, the battery level will be capped at 80%.
 use crate::acpi_call::{self, acpi_call, acpi_call_expect_valid};
+use crate::battery::enable::{EnableBuilder, Stage};
+use crate::battery::{BatteryController, BatteryEnableGuard};
 use crate::context::Context;
 use crate::fallible_drop_strategy::{
     DynFallibleDropStrategy, FallibleDropStrategies, FallibleDropStrategy,
 };
 use crate::Handler;
 use thiserror::Error;
-use crate::battery::{BatteryController, BatteryEnableGuard};
-use crate::battery::enable::{EnableBuilder, Stage};
 
 /// Handy wrapper for [`Error`].
 pub type Result<T, E = Error> = std::result::Result<T, E>;
 
-pub type EnableBatteryConservationBuilder<'ctrl, 'ctx, S> = EnableBuilder<'ctrl, 'ctx, S, BatteryConservationController<'ctx>>;
+pub type EnableBatteryConservationBuilder<'ctrl, 'ctx, S> =
+    EnableBuilder<'ctrl, 'ctx, S, BatteryConservationController<'ctx>>;
 
 /// Bad things that could happen when dealing with battery conservation mode.
 #[derive(Debug, Error)]
@@ -85,10 +86,15 @@ impl<'bc, 'ctx> BatteryConservationDisableGuard<'bc, 'ctx> {
     }
 }
 
-impl<'bc, 'ctx: 'bc> BatteryEnableGuard<'bc, 'ctx, BatteryConservationController<'ctx>> for BatteryConservationEnableGuard<'bc, 'ctx> {
+impl<'bc, 'ctx: 'bc> BatteryEnableGuard<'bc, 'ctx, BatteryConservationController<'ctx>>
+    for BatteryConservationEnableGuard<'bc, 'ctx>
+{
     type Error = Error;
 
-    fn new(controller: &'bc mut BatteryConservationController<'ctx>, handler: Handler) -> Result<Self, Self::Error> {
+    fn new(
+        controller: &'bc mut BatteryConservationController<'ctx>,
+        handler: Handler,
+    ) -> Result<Self, Self::Error> {
         controller.enable().handler(handler).now()?;
 
         Ok(Self { controller })
@@ -200,7 +206,8 @@ impl<'this, 'ctx: 'this> BatteryController<'this, 'ctx> for BatteryConservationC
 /// Enable battery conservation with the switch handler. If you want more advanced options, see
 /// [`BatteryConservationController::enable`].
 pub fn enable(context: &Context) -> Result<()> {
-    context.controllers()
+    context
+        .controllers()
         .battery_conservation()
         .enable()
         .switch()
@@ -209,30 +216,22 @@ pub fn enable(context: &Context) -> Result<()> {
 
 /// Disable battery conservation.
 pub fn disable(context: &Context) -> acpi_call::Result<()> {
-    context.controllers()
-        .battery_conservation()
-        .disable()
+    context.controllers().battery_conservation().disable()
 }
 
 /// Get the battery conservation status.
 pub fn get(context: &Context) -> acpi_call::Result<bool> {
-    context.controllers()
-        .battery_conservation()
-        .get()
+    context.controllers().battery_conservation().get()
 }
 
 /// Check if battery conservation is enabled.
 pub fn enabled(context: &Context) -> acpi_call::Result<bool> {
-    context.controllers()
-        .battery_conservation()
-        .enabled()
+    context.controllers().battery_conservation().enabled()
 }
 
 /// Check if battery conservation is disabled.
 pub fn disabled(context: &Context) -> acpi_call::Result<bool> {
-    context.controllers()
-        .battery_conservation()
-        .disabled()
+    context.controllers().battery_conservation().disabled()
 }
 
 #[cfg(test)]

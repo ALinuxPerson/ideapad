@@ -1,8 +1,8 @@
 //! Shared contents between [`crate::battery_conservation`] and [`crate::rapid_charge`].
 mod private {
     use crate::battery_conservation::BatteryConservationEnableGuard;
-    use crate::{BatteryConservationController, RapidChargeController};
     use crate::rapid_charge::RapidChargeEnableGuard;
+    use crate::{BatteryConservationController, RapidChargeController};
 
     pub trait BatteryEnableGuardSeal {}
 
@@ -14,14 +14,16 @@ mod private {
     impl<'ctx> BatteryControllerSeal for BatteryConservationController<'ctx> {}
     impl<'ctx> BatteryControllerSeal for RapidChargeController<'ctx> {}
 }
-use std::error::Error;
 use crate::{acpi_call, Handler};
+use std::error::Error;
 
 pub mod enable;
 
 #[doc(hidden)]
 #[allow(drop_bounds)]
-pub trait BatteryEnableGuard<'ctrl, 'ctx: 'ctrl, C: BatteryController<'ctrl, 'ctx>>: Drop + Sized + private::BatteryEnableGuardSeal {
+pub trait BatteryEnableGuard<'ctrl, 'ctx: 'ctrl, C: BatteryController<'ctrl, 'ctx>>:
+    Drop + Sized + private::BatteryEnableGuardSeal
+{
     type Error: Error;
 
     fn new(controller: &'ctrl mut C, handler: Handler) -> Result<Self, Self::Error>;
