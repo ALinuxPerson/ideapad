@@ -392,17 +392,22 @@ mod tests {
     #[test]
     #[serial]
     fn test_enable_with_handler() {
-        crate::initialize().expect("initialization failed");
+        let profile = crate::initialize().expect("initialization failed");
+        let mut battery_conservation = profile.battery_conservation();
+        let mut rapid_charge = profile.rapid_charge();
 
         // set up our scenario here
-        battery_conservation::enable_with_handler(Handler::Ignore)
-            .expect("battery conservation enable failed");
+        battery_conservation
+            .enable()
+            .handler(Handler::Ignore)
+            .now()
+            .expect("failed to enable battery conservation");
 
         // let's test first with ignorance
-        rapid_charge::enable_with_handler(Handler::Ignore).expect("rapid charge enable failed");
+        rapid_charge.enable_with_handler(Handler::Ignore).expect("rapid charge enable failed");
 
         assert!(
-            rapid_charge::enabled().expect("failed to get rapid charge status"),
+            rapid_charge.enabled().expect("failed to get rapid charge status"),
             "expected rapid charge to be enabled with the ignore handler",
         );
 
@@ -410,45 +415,49 @@ mod tests {
         // trying to enable battery conservation, albeit this is easily bypassed by just switching
         // on battery conservation again afterwards, sooo we still need the switch handler
         assert!(
-            battery_conservation::disabled().expect("failed to get battery conservation status"),
+            battery_conservation.disabled().expect("failed to get battery conservation status"),
             "expected battery conservation to be disabled with the ignore handler",
         );
 
         // now let's test with an error handler
-        battery_conservation::enable_with_handler(Handler::Ignore)
-            .expect("battery conservation enable failed");
+        battery_conservation.enable()
+            .handler(Handler::Ignore)
+            .now()
+            .expect("failed to enable battery conservation");
 
-        let error = rapid_charge::enable_with_handler(Handler::Error)
+        let error = rapid_charge.enable_with_handler(Handler::Error)
             .expect_err("rapid charge enable succeeded");
         assert!(matches!(
             error,
             rapid_charge::Error::BatteryConservationEnabled
         ));
-        assert!(battery_conservation::enabled().expect("failed to get battery conservation status"));
+        assert!(battery_conservation.enabled().expect("failed to get battery conservation status"));
 
         // now let's test with a switch handler
-        rapid_charge::enable_with_handler(Handler::Switch).expect("rapid charge enable failed");
-        assert!(rapid_charge::enabled().expect("failed to get rapid charge status"));
+        rapid_charge.enable_with_handler(Handler::Switch).expect("rapid charge enable failed");
+        assert!(rapid_charge.enabled().expect("failed to get rapid charge status"));
         assert!(
-            battery_conservation::disabled().expect("failed to get battery conservation status")
+            battery_conservation.disabled().expect("failed to get battery conservation status")
         );
     }
 
     #[test]
     #[serial]
     fn test_enable_ignore() {
-        crate::initialize().expect("initialization failed");
+        let profile = crate::initialize().expect("initialization failed");
+        let mut battery_conservation = profile.battery_conservation();
+        let mut rapid_charge = profile.rapid_charge();
 
-        battery_conservation::enable_ignore().expect("battery conservation enable failed");
-        rapid_charge::enable_ignore().expect("rapid charge enable failed");
+        battery_conservation.enable().ignore().now().expect("battery conservation enable failed");
+        rapid_charge.enable_ignore().expect("rapid charge enable failed");
 
         assert!(
-            rapid_charge::enabled().expect("failed to get rapid charge status"),
+            rapid_charge.enabled().expect("failed to get rapid charge status"),
             "expected rapid charge to be enabled with the ignore handler",
         );
 
         assert!(
-            battery_conservation::disabled().expect("failed to get battery conservation status"),
+            battery_conservation.disabled().expect("failed to get battery conservation status"),
             "expected battery conservation to be disabled with the ignore handler",
         );
     }
