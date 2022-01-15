@@ -23,6 +23,7 @@ pub mod system_performance;
 #[cfg(test)]
 mod battery_conservation_rapid_charge_shared_tests;
 
+use parking_lot::RwLockReadGuard;
 pub use prelude::*;
 
 #[cfg(not(target_os = "linux"))]
@@ -32,24 +33,20 @@ compile_error!(
 
 /// Initializes this crate with an auto detected profile. Note that if you don't intend on using
 /// the global profile, you don't need to call this function.
-pub fn initialize() -> profile::Result<()> {
-    let _ = Profile::auto_detect()?;
-
-    Ok(())
+pub fn initialize() -> profile::Result<RwLockReadGuard<'static, Profile>> {
+    Profile::auto_detect()
 }
 
 /// Initialize the global profile with the specified profile.
-pub fn initialize_with_profile(profile: Profile) {
-    let _ = Profile::initialize_with_profile(profile);
+pub fn initialize_with_profile(profile: Profile) -> RwLockReadGuard<'static, Profile> {
+    Profile::initialize_with_profile(profile)
 }
 
 /// Initialize the global profile with the specified search path.
 pub fn initialize_with_search_path(
     search_path: impl Iterator<Item = Profile>,
-) -> profile::Result<()> {
-    let _ = Profile::initialize_with_search_path(search_path)?;
-
-    Ok(())
+) -> profile::Result<RwLockReadGuard<'static, Profile>> {
+    Profile::initialize_with_search_path(search_path)
 }
 
 /// Handlers which determine what to do when battery conservation and rapid charge modes conflict.
