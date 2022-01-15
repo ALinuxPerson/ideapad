@@ -84,17 +84,6 @@ impl<'ctx> RapidChargeController<'ctx> {
         Self { context }
     }
 
-    /// Enable rapid charge with the specified [`Handler`].
-    ///
-    /// For more information on what do the [`Handler`]s mean, see the [`Handler`] documentation.
-    pub fn enable_with_handler(&mut self, handler: Handler) -> Result<()> {
-        match handler {
-            Handler::Ignore => self.enable_ignore().map_err(Into::into),
-            Handler::Error => self.enable_error(),
-            Handler::Switch => self.enable_switch().map_err(Into::into),
-        }
-    }
-
     /// Builder for enabling rapid charge.
     pub fn enable<'rc>(&'rc mut self) -> EnableRapidChargeBuilder<'rc, 'ctx, Begin> {
         EnableRapidChargeBuilder::new(self)
