@@ -19,6 +19,8 @@
 use parking_lot::Mutex;
 
 use std::error::Error;
+use std::fmt;
+use std::fmt::Display;
 
 #[cfg(feature = "log_to_writer_on_error")]
 use std::io::Write;
@@ -33,8 +35,6 @@ use std::process;
 
 #[cfg(feature = "send_errors_to_receiver_on_error")]
 use crossbeam::channel::{Receiver, Sender};
-
-use tap::Pipe;
 
 /// Marker trait which indicates that the implementing type is thread safe.
 pub trait ThreadSafe: Send + Sync {}
@@ -90,14 +90,34 @@ pub trait FallibleDropStrategy: ThreadSafe {
     }
 }
 
+/// A thread safe error which is dynamically dispatched.
+#[derive(Debug)]
+pub enum DynCowThreadSafeError {
+    /// Owned thread safe error, located on the heap.
+    Owned(Box<dyn ThreadSafeError>),
+
+    /// Borrowed thread safe error.
+    Borrowed(&'static dyn ThreadSafeError),
+}
+
+impl Error for DynCowThreadSafeError {}
+impl Display for DynCowThreadSafeError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Self::Owned(error) => error.fmt(f),
+            Self::Borrowed(error) => error.fmt(f),
+        }
+    }
+}
+
 /// Dynamically dispatched version of [`FallibleDropStrategy`].
 pub trait DynFallibleDropStrategy: ThreadSafe {
     /// Dynamically dispatched version of [`FallibleDropStrategy::on_error`].
-    fn on_error(&self, error: &'static dyn ThreadSafeError);
+    fn on_error(&self, error: DynCowThreadSafeError);
 }
 
 impl<FDS: FallibleDropStrategy> DynFallibleDropStrategy for FDS {
-    fn on_error(&self, error: &'static dyn ThreadSafeError) {
+    fn on_error(&self, error: DynCowThreadSafeError) {
         self.on_error(error)
     }
 }
@@ -242,7 +262,7 @@ impl<'a> FallibleDropStrategy for DynToGenericFallibleDropStrategyAdapter<'a> {
     fn on_error<E: ThreadSafeError>(&self, error: E) {
         DynFallibleDropStrategy::on_error(
             self.0,
-            Box::new(error).pipe(Box::leak) // hmmm
+            DynCowThreadSafeError::Owned(Box::new(error)),
         )
     }
 }
