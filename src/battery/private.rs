@@ -8,6 +8,8 @@ impl<'bc, 'ctx: 'bc> BatteryEnableGuardSeal for BatteryConservationEnableGuard<'
 
 impl<'rc, 'ctx: 'rc> BatteryEnableGuardSeal for RapidChargeEnableGuard<'rc, 'ctx> {}
 
+pub trait BatteryDisableGuardSeal {}
+
 pub trait BatteryControllerSeal {}
 
 impl<'ctx> BatteryControllerSeal for BatteryConservationController<'ctx> {}

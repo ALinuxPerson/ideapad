@@ -15,6 +15,14 @@ pub trait BatteryEnableGuard<'ctrl, 'ctx: 'ctrl, C: BatteryController<'ctrl, 'ct
 }
 
 #[doc(hidden)]
+#[allow(drop_bounds)]
+pub trait BatteryDisableGuard<'ctrl, 'ctx: 'ctrl, C: BatteryController<'ctrl, 'ctx>>:
+    Drop + Sized + private::BatteryDisableGuardSeal
+{
+    fn new(controller: &'ctrl mut C, handler: Handler) -> Result<Self, C::EnableError>;
+}
+
+#[doc(hidden)]
 pub trait BatteryController<'this, 'ctx: 'this>: Sized + private::BatteryControllerSeal {
     type EnableGuard: BatteryEnableGuard<'this, 'ctx, Self>;
     type EnableError: Error + From<acpi_call::Error>;
