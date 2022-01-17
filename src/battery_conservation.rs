@@ -171,7 +171,7 @@ impl<'ctx> BatteryConservationController<'ctx> {
 
 impl<'this, 'ctx: 'this> BatteryController<'this, 'ctx> for BatteryConservationController<'ctx> {
     type EnableGuard = BatteryConservationEnableGuard<'this, 'ctx>;
-    type EnableError = Error;
+    type Error = Error;
 
     fn enable_ignore(&mut self) -> acpi_call::Result<()> {
         acpi_call(
@@ -182,7 +182,7 @@ impl<'this, 'ctx: 'this> BatteryController<'this, 'ctx> for BatteryConservationC
         Ok(())
     }
 
-    fn enable_error(&mut self) -> Result<(), Self::EnableError> {
+    fn enable_error(&mut self) -> Result<(), Self::Error> {
         if self.context.controllers().rapid_charge().enabled()? {
             Err(Error::RapidChargeEnabled)
         } else {

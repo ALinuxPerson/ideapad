@@ -90,13 +90,13 @@ impl<'ctrl, 'ctx: 'ctrl, C: BatteryController<'ctrl, 'ctx>> EnableBuilder<'ctrl,
     /// Consume the builder, creating an enable guard from it.
     pub fn guard(
         self,
-    ) -> Result<C::EnableGuard, C::EnableError> {
+    ) -> Result<C::EnableGuard, C::Error> {
         C::EnableGuard::new(self.controller, self.handler())
     }
 
     /// Consume the builder, enabling the battery immediately with the handler that was specified
     /// from the previous stage.
-    pub fn now(self) -> Result<(), C::EnableError> {
+    pub fn now(self) -> Result<(), C::Error> {
         match self.handler() {
             Handler::Ignore => self.controller.enable_ignore().map_err(Into::into),
             Handler::Error => self.controller.enable_error(),

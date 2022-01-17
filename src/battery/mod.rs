@@ -11,7 +11,7 @@ pub mod enable;
 pub trait BatteryEnableGuard<'ctrl, 'ctx: 'ctrl, C: BatteryController<'ctrl, 'ctx>>:
     Drop + Sized + private::BatteryEnableGuardSeal
 {
-    fn new(controller: &'ctrl mut C, handler: Handler) -> Result<Self, C::EnableError>;
+    fn new(controller: &'ctrl mut C, handler: Handler) -> Result<Self, C::Error>;
 }
 
 #[doc(hidden)]
@@ -19,15 +19,15 @@ pub trait BatteryEnableGuard<'ctrl, 'ctx: 'ctrl, C: BatteryController<'ctrl, 'ct
 pub trait BatteryDisableGuard<'ctrl, 'ctx: 'ctrl, C: BatteryController<'ctrl, 'ctx>>:
     Drop + Sized + private::BatteryDisableGuardSeal
 {
-    fn new(controller: &'ctrl mut C, handler: Handler) -> Result<Self, C::EnableError>;
+    fn new(controller: &'ctrl mut C, handler: Handler) -> Result<Self, C::Error>;
 }
 
 #[doc(hidden)]
 pub trait BatteryController<'this, 'ctx: 'this>: Sized + private::BatteryControllerSeal {
     type EnableGuard: BatteryEnableGuard<'this, 'ctx, Self>;
-    type EnableError: Error + From<acpi_call::Error>;
+    type Error: Error + From<acpi_call::Error>;
 
     fn enable_ignore(&mut self) -> acpi_call::Result<()>;
-    fn enable_error(&mut self) -> Result<(), Self::EnableError>;
+    fn enable_error(&mut self) -> Result<(), Self::Error>;
     fn enable_switch(&mut self) -> acpi_call::Result<()>;
 }
