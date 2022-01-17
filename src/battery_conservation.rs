@@ -88,12 +88,10 @@ impl<'bc, 'ctx> BatteryConservationDisableGuard<'bc, 'ctx> {
 impl<'bc, 'ctx: 'bc> BatteryEnableGuard<'bc, 'ctx, BatteryConservationController<'ctx>>
     for BatteryConservationEnableGuard<'bc, 'ctx>
 {
-    type Error = Error;
-
     fn new(
         controller: &'bc mut BatteryConservationController<'ctx>,
         handler: Handler,
-    ) -> Result<Self, Self::Error> {
+    ) -> Result<Self> {
         controller.enable().handler(handler).now()?;
 
         Ok(Self { controller })

@@ -11,9 +11,7 @@ pub mod enable;
 pub trait BatteryEnableGuard<'ctrl, 'ctx: 'ctrl, C: BatteryController<'ctrl, 'ctx>>:
     Drop + Sized + private::BatteryEnableGuardSeal
 {
-    type Error: Error;
-
-    fn new(controller: &'ctrl mut C, handler: Handler) -> Result<Self, Self::Error>;
+    fn new(controller: &'ctrl mut C, handler: Handler) -> Result<Self, C::EnableError>;
 }
 
 #[doc(hidden)]

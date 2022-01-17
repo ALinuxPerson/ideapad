@@ -90,7 +90,7 @@ impl<'ctrl, 'ctx: 'ctrl, C: BatteryController<'ctrl, 'ctx>> EnableBuilder<'ctrl,
     /// Consume the builder, creating an enable guard from it.
     pub fn guard(
         self,
-    ) -> Result<C::EnableGuard, <C::EnableGuard as BatteryEnableGuard<'ctrl, 'ctx, C>>::Error> {
+    ) -> Result<C::EnableGuard, C::EnableError> {
         C::EnableGuard::new(self.controller, self.handler())
     }
 

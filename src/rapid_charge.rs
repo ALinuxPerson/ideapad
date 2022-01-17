@@ -60,12 +60,10 @@ impl<'rc, 'ctx: 'rc> Drop for RapidChargeEnableGuard<'rc, 'ctx> {
 impl<'rc, 'ctx: 'rc> BatteryEnableGuard<'rc, 'ctx, RapidChargeController<'ctx>>
     for RapidChargeEnableGuard<'rc, 'ctx>
 {
-    type Error = Error;
-
     fn new(
         controller: &'rc mut RapidChargeController<'ctx>,
         handler: Handler,
-    ) -> std::result::Result<Self, Self::Error> {
+    ) -> Result<Self> {
         controller.enable().handler(handler).now()?;
         Ok(Self { controller })
     }
