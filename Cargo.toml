@@ -13,6 +13,7 @@ serde = { version = "1.0.132", optional = true, features = ["derive"] }
 smbios-lib = "0.8.0"
 tap = "1.0.1"
 thiserror = "1.0.30"
+try-drop = { git = "https://github.com/ALinuxPerson/try-drop.git" }
 
 [features]
 default = ["core", "profiles", "macros", "fallible_drop_strategies"]
