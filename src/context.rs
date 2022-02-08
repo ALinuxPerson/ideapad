@@ -37,19 +37,19 @@ impl<'ctx, D, DD> Controllers<'ctx, D, DD>
 
     /// Creates a new [`BatteryConservationController`] instance.
     #[cfg(feature = "battery_conservation")]
-    pub const fn battery_conservation(&self) -> BatteryConservationController<'ctx> {
+    pub const fn battery_conservation(&self) -> BatteryConservationController<'ctx, D, DD> {
         BatteryConservationController::new(self.context)
     }
 
     /// Creates a new [`RapidChargeController`] instance.
     #[cfg(feature = "rapid_charge")]
-    pub const fn rapid_charge(&self) -> RapidChargeController<'ctx> {
+    pub const fn rapid_charge(&self) -> RapidChargeController<'ctx, D, DD> {
         RapidChargeController::new(self.context)
     }
 
     /// Creates a new [`SystemPerformanceController`] instance.
     #[cfg(feature = "system_performance")]
-    pub const fn system_performance(&self) -> SystemPerformanceController<'ctx> {
+    pub const fn system_performance(&self) -> SystemPerformanceController<'ctx, D, DD> {
         SystemPerformanceController::new(self.context)
     }
 }
