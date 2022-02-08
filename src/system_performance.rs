@@ -290,11 +290,19 @@ impl<'ctx, D, DD> SystemPerformanceController<'ctx, D, DD>
 }
 
 /// Get the system performance mode.
-pub fn get(context: &Context) -> Result<SystemPerformanceMode> {
+pub fn get<D, DD>(context: &Context<D, DD>) -> Result<SystemPerformanceMode>
+where
+    D: FallibleTryDropStrategy,
+    DD: FallbackTryDropStrategy,
+{
     context.controllers().system_performance().get()
 }
 
 /// Set the system performance mode to the specified mode.
-pub fn set(context: &Context, mode: SystemPerformanceMode) -> acpi_call::Result<()> {
+pub fn set<D, DD>(context: &Context<D, DD>, mode: SystemPerformanceMode) -> acpi_call::Result<()>
+    where
+        D: FallibleTryDropStrategy,
+        DD: FallbackTryDropStrategy,
+{
     context.controllers().system_performance().set(mode)
 }
