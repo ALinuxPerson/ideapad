@@ -205,27 +205,47 @@ where
 /// Enable rapid charge, switching off battery conservation if it's enabled.
 ///
 /// For more advanced usage, see [`RapidChargeController::enable`].
-pub fn enable(context: &Context) -> Result<()> {
+pub fn enable<D, DD>(context: &Context<D, DD>) -> Result<()>
+where
+    D: FallibleTryDropStrategy,
+    DD: FallbackTryDropStrategy,
+{
     context.controllers().rapid_charge().enable().switch().now()
 }
 
 /// Disable rapid charge.
-pub fn disable(context: &Context) -> acpi_call::Result<()> {
+pub fn disable<D, DD>(context: &Context<D, DD>) -> acpi_call::Result<()>
+    where
+        D: FallibleTryDropStrategy,
+        DD: FallbackTryDropStrategy,
+{
     context.controllers().rapid_charge().disable()
 }
 
 /// Get the rapid charge status.
-pub fn get(context: &Context) -> acpi_call::Result<bool> {
+pub fn get<D, DD>(context: &Context<D, DD>) -> acpi_call::Result<bool>
+    where
+        D: FallibleTryDropStrategy,
+        DD: FallbackTryDropStrategy,
+{
     context.controllers().rapid_charge().get()
 }
 
 /// Check if rapid charge is enabled.
-pub fn enabled(context: &Context) -> acpi_call::Result<bool> {
+pub fn enabled<D, DD>(context: &Context<D, DD>) -> acpi_call::Result<bool>
+    where
+        D: FallibleTryDropStrategy,
+        DD: FallbackTryDropStrategy,
+{
     context.controllers().rapid_charge().enabled()
 }
 
 /// Check if rapid charge is disabled.
-pub fn disabled(context: &Context) -> acpi_call::Result<bool> {
+pub fn disabled<D, DD>(context: &Context<D, DD>) -> acpi_call::Result<bool>
+    where
+        D: FallibleTryDropStrategy,
+        DD: FallbackTryDropStrategy,
+{
     context.controllers().rapid_charge().disabled()
 }
 
