@@ -37,7 +37,7 @@ pub enum Error {
 
 /// Builder for enabling rapid charge.
 pub type EnableRapidChargeBuilder<'rc, 'ctx, D, DD, S> =
-    EnableBuilder<'rc, 'ctx, S, RapidChargeController<'ctx, D, DD>>;
+    EnableBuilder<'rc, 'ctx, S, RapidChargeController<'ctx, D, DD>, D, DD>;
 
 pub struct RapidChargeEnableGuardInner<'rc, 'ctx, D, DD>
 where

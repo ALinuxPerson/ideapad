@@ -4,6 +4,7 @@ use crate::battery::{BatteryController, BatteryEnableGuard};
 use crate::context::Context;
 use crate::Handler;
 use std::marker::PhantomData;
+use try_drop::prelude::*;
 
 mod private {
     pub trait Sealed {}
@@ -38,15 +39,28 @@ impl private::Sealed for Call {}
 /// A builder for enabling a battery mode.
 ///
 /// This is common between rapid charge and battery conservation.
-pub struct EnableBuilder<'ctrl, 'ctx: 'ctrl, S: Stage, C: BatteryController<'ctrl, 'ctx>> {
+pub struct EnableBuilder<'ctrl, 'ctx, S, C, D, DD>
+where
+    'ctx: 'ctrl,
+    S: Stage,
+    C: BatteryController<'ctrl, 'ctx>,
+    D: FallibleTryDropStrategy,
+    DD: FallbackTryDropStrategy,
+{
     /// A reference to the controller, whatever that may be.
     pub controller: &'ctrl mut C,
 
     stage: S,
-    _marker: PhantomData<&'ctx Context>,
+    _marker: PhantomData<&'ctx Context<D, DD>>,
 }
 
-impl<'ctrl, 'ctx, C: BatteryController<'ctrl, 'ctx>> EnableBuilder<'ctrl, 'ctx, Begin, C> {
+impl<'ctrl, 'ctx, C, D, DD> EnableBuilder<'ctrl, 'ctx, Begin, C, D, DD>
+    where
+        'ctx: 'ctrl,
+        C: BatteryController<'ctrl, 'ctx>,
+        D: FallibleTryDropStrategy,
+        DD: FallbackTryDropStrategy,
+{
     /// Start the process of enabling a battery mode.
     pub fn new(controller: &'ctrl mut C) -> Self {
         Self {
@@ -57,7 +71,7 @@ impl<'ctrl, 'ctx, C: BatteryController<'ctrl, 'ctx>> EnableBuilder<'ctrl, 'ctx, 
     }
 
     /// Pick the handler, moving on to the next stage.
-    pub fn handler(self, handler: Handler) -> EnableBuilder<'ctrl, 'ctx, Call, C> {
+    pub fn handler(self, handler: Handler) -> EnableBuilder<'ctrl, 'ctx, Call, C, D, DD> {
         EnableBuilder {
             controller: self.controller,
             stage: Call { handler },
@@ -66,22 +80,28 @@ impl<'ctrl, 'ctx, C: BatteryController<'ctrl, 'ctx>> EnableBuilder<'ctrl, 'ctx, 
     }
 
     /// Pick the ignore handler, moving on to the next stage.
-    pub fn ignore(self) -> EnableBuilder<'ctrl, 'ctx, Call, C> {
+    pub fn ignore(self) -> EnableBuilder<'ctrl, 'ctx, Call, C, D, DD> {
         self.handler(Handler::Ignore)
     }
 
     /// Pick the error handler, moving on to the next stage.
-    pub fn error(self) -> EnableBuilder<'ctrl, 'ctx, Call, C> {
+    pub fn error(self) -> EnableBuilder<'ctrl, 'ctx, Call, C, D, DD> {
         self.handler(Handler::Error)
     }
 
     /// Pick the switch handler, moving on to the next stage.
-    pub fn switch(self) -> EnableBuilder<'ctrl, 'ctx, Call, C> {
+    pub fn switch(self) -> EnableBuilder<'ctrl, 'ctx, Call, C, D, DD> {
         self.handler(Handler::Switch)
     }
 }
 
-impl<'ctrl, 'ctx: 'ctrl, C: BatteryController<'ctrl, 'ctx>> EnableBuilder<'ctrl, 'ctx, Call, C> {
+impl<'ctrl, 'ctx, C, D, DD> EnableBuilder<'ctrl, 'ctx, Call, C, D, DD>
+    where
+        'ctx: 'ctrl,
+        C: BatteryController<'ctrl, 'ctx>,
+        D: FallibleTryDropStrategy,
+        DD: FallbackTryDropStrategy,
+{
     /// Get the handler from the previous stage.
     pub fn handler(&self) -> Handler {
         self.stage.handler

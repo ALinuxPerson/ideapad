@@ -20,7 +20,7 @@ pub type Result<T, E = Error> = std::result::Result<T, E>;
 
 /// Builder for enabling battery conservation.
 pub type EnableBatteryConservationBuilder<'ctrl, 'ctx, D, DD, S> =
-    EnableBuilder<'ctrl, 'ctx, S, BatteryConservationController<'ctx, D, DD>>;
+    EnableBuilder<'ctrl, 'ctx, S, BatteryConservationController<'ctx, D, DD>, D, DD>;
 
 /// Bad things that could happen when dealing with battery conservation mode.
 #[derive(Debug, Error)]
