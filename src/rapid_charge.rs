@@ -115,7 +115,7 @@ where
     DD: FallbackTryDropStrategy,
 {
     /// Create a new controller.
-    pub const fn new(context: &'ctx Context<D, DD>) -> Self {
+    pub fn new(context: &'ctx Context<D, DD>) -> Self {
         Self { context }
     }
 

@@ -180,7 +180,7 @@ impl<'ctx, D, DD> BatteryConservationController<'ctx, D, DD>
         DD: FallbackTryDropStrategy,
 {
     /// Create a new battery conservation controller.
-    pub const fn new(context: &'ctx Context<D, DD>) -> Self {
+    pub fn new(context: &'ctx Context<D, DD>) -> Self {
         Self { context }
     }
 

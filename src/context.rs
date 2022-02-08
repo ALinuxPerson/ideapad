@@ -31,25 +31,25 @@ impl<'ctx, D, DD> Controllers<'ctx, D, DD>
         DD: FallbackTryDropStrategy,
 {
     /// Creates a new [`Controllers`] instance.
-    pub const fn new(context: &'ctx Context<D, DD>) -> Self {
+    pub fn new(context: &'ctx Context<D, DD>) -> Self {
         Self { context }
     }
 
     /// Creates a new [`BatteryConservationController`] instance.
     #[cfg(feature = "battery_conservation")]
-    pub const fn battery_conservation(&self) -> BatteryConservationController<'ctx, D, DD> {
+    pub fn battery_conservation(&self) -> BatteryConservationController<'ctx, D, DD> {
         BatteryConservationController::new(self.context)
     }
 
     /// Creates a new [`RapidChargeController`] instance.
     #[cfg(feature = "rapid_charge")]
-    pub const fn rapid_charge(&self) -> RapidChargeController<'ctx, D, DD> {
+    pub fn rapid_charge(&self) -> RapidChargeController<'ctx, D, DD> {
         RapidChargeController::new(self.context)
     }
 
     /// Creates a new [`SystemPerformanceController`] instance.
     #[cfg(feature = "system_performance")]
-    pub const fn system_performance(&self) -> SystemPerformanceController<'ctx, D, DD> {
+    pub fn system_performance(&self) -> SystemPerformanceController<'ctx, D, DD> {
         SystemPerformanceController::new(self.context)
     }
 }
@@ -102,7 +102,7 @@ impl<D, DD> Context<D, DD>
     }
 
     /// Create a controller creator.
-    pub const fn controllers(&self) -> Controllers<D, DD> {
+    pub fn controllers(&self) -> Controllers<D, DD> {
         Controllers::new(self)
     }
 }
