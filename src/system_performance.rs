@@ -183,7 +183,7 @@ impl<'sp, 'p, D, DD> PureTryDrop for SystemPerformanceGuardInner<'sp, 'p, D, DD>
     }
 
     fn try_drop_strategy(&self) -> &Self::TryDropStrategy {
-        &self.controller.context.fallback_try_drop_strategy
+        &self.controller.context.fallible_try_drop_strategy
     }
 
     unsafe fn try_drop(&mut self) -> Result<(), Self::Error> {
@@ -208,7 +208,7 @@ impl<'ctx, D, DD> SystemPerformanceController<'ctx, D, DD>
         DD: FallbackTryDropStrategy,
 {
     /// Create a new system performance controller.
-    pub const fn new(context: &'ctx Context) -> Self {
+    pub fn new(context: &'ctx Context<D, DD>) -> Self {
         Self { context }
     }
 
