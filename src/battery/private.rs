@@ -12,7 +12,12 @@ where
     DD: FallbackTryDropStrategy,
 {}
 
-impl<'rc, 'ctx: 'rc> BatteryEnableGuardSeal for RapidChargeEnableGuard<'rc, 'ctx> {}
+impl<'rc, 'ctx, D, DD> BatteryEnableGuardSeal for RapidChargeEnableGuard<'rc, 'ctx, D, DD>
+    where
+        'ctx: 'rc,
+        D: FallibleTryDropStrategy,
+        DD: FallbackTryDropStrategy,
+{}
 
 pub trait BatteryDisableGuardSeal {}
 
@@ -24,4 +29,8 @@ where
     DD: FallbackTryDropStrategy,
 {}
 
-impl<'ctx> BatteryControllerSeal for RapidChargeController<'ctx> {}
+impl<'ctx, D, DD> BatteryControllerSeal for RapidChargeController<'ctx, D, DD>
+    where
+        D: FallibleTryDropStrategy,
+        DD: FallbackTryDropStrategy,
+{}
