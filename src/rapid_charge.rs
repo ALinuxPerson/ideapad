@@ -57,7 +57,7 @@ where
     D: FallibleTryDropStrategy,
     DD: FallbackTryDropStrategy;
 
-impl<'rc, 'ctx, D, DD> PureTryDrop for RapidChargeEnableGuard<'rc, 'ctx, D, DD>
+impl<'rc, 'ctx, D, DD> PureTryDrop for RapidChargeEnableGuardInner<'rc, 'ctx, D, DD>
     where
         'ctx: 'rc,
         D: FallibleTryDropStrategy,
