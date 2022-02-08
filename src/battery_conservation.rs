@@ -284,22 +284,38 @@ pub fn enable(context: &Context) -> Result<()> {
 }
 
 /// Disable battery conservation.
-pub fn disable(context: &Context) -> acpi_call::Result<()> {
+pub fn disable<D, DD>(context: &Context<D, DD>) -> acpi_call::Result<()>
+where
+    D: FallibleTryDropStrategy,
+    DD: FallbackTryDropStrategy,
+{
     context.controllers().battery_conservation().disable()
 }
 
 /// Get the battery conservation status.
-pub fn get(context: &Context) -> acpi_call::Result<bool> {
+pub fn get<D, DD>(context: &Context) -> acpi_call::Result<bool>
+    where
+        D: FallibleTryDropStrategy,
+        DD: FallbackTryDropStrategy,
+{
     context.controllers().battery_conservation().get()
 }
 
 /// Check if battery conservation is enabled.
-pub fn enabled(context: &Context) -> acpi_call::Result<bool> {
+pub fn enabled<D, DD>(context: &Context) -> acpi_call::Result<bool>
+    where
+        D: FallibleTryDropStrategy,
+        DD: FallbackTryDropStrategy,
+{
     context.controllers().battery_conservation().enabled()
 }
 
 /// Check if battery conservation is disabled.
-pub fn disabled(context: &Context) -> acpi_call::Result<bool> {
+pub fn disabled<D, DD>(context: &Context) -> acpi_call::Result<bool>
+    where
+        D: FallibleTryDropStrategy,
+        DD: FallbackTryDropStrategy,
+{
     context.controllers().battery_conservation().disabled()
 }
 
