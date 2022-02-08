@@ -1,8 +1,9 @@
 //! Contains [`Context`], a structure which will be used by the majority of this crate.
 
-use crate::fallible_drop_strategy::FallibleDropStrategies;
+use try_drop::prelude::*;
 use crate::{profile, Profile};
 use once_cell::sync::OnceCell;
+use try_drop::{GlobalFallbackTryDropStrategyHandler, GlobalTryDropStrategyHandler};
 
 #[cfg(feature = "battery_conservation")]
 use crate::battery_conservation::BatteryConservationController;
@@ -15,14 +16,22 @@ use crate::system_performance::SystemPerformanceController;
 
 /// Creates controllers.
 #[derive(Copy, Clone)]
-pub struct Controllers<'ctx> {
+pub struct Controllers<'ctx, D = GlobalTryDropStrategyHandler, DD = GlobalFallbackTryDropStrategyHandler>
+    where
+        D: FallibleTryDropStrategy,
+        DD: FallbackTryDropStrategy,
+{
     /// A reference to the [`Context`].
-    pub context: &'ctx Context,
+    pub context: &'ctx Context<D, DD>,
 }
 
-impl<'ctx> Controllers<'ctx> {
+impl<'ctx, D, DD> Controllers<'ctx, D, DD>
+    where
+        D: FallibleTryDropStrategy,
+        DD: FallbackTryDropStrategy,
+{
     /// Creates a new [`Controllers`] instance.
-    pub const fn new(context: &'ctx Context) -> Self {
+    pub const fn new(context: &'ctx Context<D, DD>) -> Self {
         Self { context }
     }
 
@@ -46,10 +55,15 @@ impl<'ctx> Controllers<'ctx> {
 }
 
 /// A context, which will be used by all controllers in this crate.
-pub struct Context {
+pub struct Context<D = GlobalTryDropStrategyHandler, DD = GlobalFallbackTryDropStrategyHandler>
+where
+    D: FallibleTryDropStrategy,
+    DD: FallbackTryDropStrategy,
+{
     /// The profile.
     pub profile: Profile,
-    fallible_drop_strategy: OnceCell<FallibleDropStrategies>,
+    pub fallible_try_drop_strategy: D,
+    pub fallback_try_drop_strategy: DD,
 }
 
 impl Context {
@@ -57,7 +71,8 @@ impl Context {
     pub const fn new(profile: Profile) -> Self {
         Self {
             profile,
-            fallible_drop_strategy: OnceCell::new(),
+            fallible_try_drop_strategy: GlobalTryDropStrategyHandler,
+            fallback_try_drop_strategy: GlobalFallbackTryDropStrategyHandler,
         }
     }
 
@@ -65,40 +80,29 @@ impl Context {
     pub fn try_default() -> profile::Result<Self> {
         Ok(Self::new(Profile::find()?))
     }
+}
 
-    /// Set the fallible drop strategy.
-    ///
-    /// # Notes
-    /// If fallible drop strategy is already set, it won't be overwritten.
-    pub fn with_fallible_drop_strategy(
-        self,
-        fallible_drop_strategy: FallibleDropStrategies,
-    ) -> Self {
-        let _ = self.fallible_drop_strategy.set(fallible_drop_strategy);
-        self
-    }
-
-    /// Get a reference to the fallible drop strategy.
-    pub fn fallible_drop_strategy(&self) -> &FallibleDropStrategies {
-        self.fallible_drop_strategy
-            .get_or_init(FallibleDropStrategies::default)
-    }
-
-    /// Get a mutable reference to the fallible drop strategy.
-    pub fn fallible_drop_strategy_mut(&mut self) -> &mut FallibleDropStrategies {
-        if self.fallible_drop_strategy.get().is_none() {
-            let _ = self
-                .fallible_drop_strategy
-                .set(FallibleDropStrategies::default());
+impl<D, DD> Context<D, DD>
+    where
+        D: FallibleTryDropStrategy,
+        DD: FallbackTryDropStrategy,
+{
+    /// Creates a new context with the specified try drop strategies.
+    pub fn new_with_strategies(profile: Profile, main: D, fallback: DD) -> Self {
+        Self {
+            profile,
+            fallible_try_drop_strategy: main,
+            fallback_try_drop_strategy: fallback,
         }
+    }
 
-        self.fallible_drop_strategy.get_mut().expect(
-            "expected fallible drop strategy to already be initialized after initializing it",
-        )
+    /// Try and create a new context by trying to find a profile.
+    pub fn try_default_with_strategies(main: D, fallback: DD) -> profile::Result<Self> {
+        Ok(Self::new_with_strategies(Profile::find()?, main, fallback))
     }
 
     /// Create a controller creator.
-    pub const fn controllers(&self) -> Controllers {
+    pub const fn controllers(&self) -> Controllers<D, DD> {
         Controllers::new(self)
     }
 }
