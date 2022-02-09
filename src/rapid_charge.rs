@@ -52,7 +52,7 @@ where
 
 /// Guarantees that rapid charge is enabled for the scope
 /// (excluding external access to `/proc/acpi/call`).
-pub struct RapidChargeEnableGuard<'rc, 'ctx, D, DD>(DropAdapter<RapidChargeEnableGuardInner<'rc, 'ctx, D, DD>>)
+pub struct RapidChargeEnableGuard<'rc, 'ctx, D = GlobalTryDropStrategyHandler, DD = GlobalFallbackTryDropStrategyHandler>(DropAdapter<RapidChargeEnableGuardInner<'rc, 'ctx, D, DD>>)
 where
     'ctx: 'rc,
     D: FallibleTryDropStrategy,
