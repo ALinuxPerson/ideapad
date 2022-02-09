@@ -6,9 +6,11 @@ use crate::acpi_call::{self, acpi_call, acpi_call_expect_valid};
 use crate::battery::enable::{Begin, EnableBuilder};
 use crate::battery::{BatteryController, BatteryEnableGuard};
 use crate::context::Context;
-use crate::fallible_drop_strategy::{FallibleDropStrategies, FallibleDropStrategy};
+use try_drop::prelude::*;
 use crate::Handler;
 use thiserror::Error;
+use try_drop::{DropAdapter, GlobalFallbackTryDropStrategyHandler, GlobalTryDropStrategyHandler};
+use crate::battery_conservation::BatteryConservationDisableGuardInner;
 
 /// Handy wrapper for [`Error`].
 pub type Result<T, E = Error> = std::result::Result<T, E>;
@@ -34,56 +36,92 @@ pub enum Error {
 }
 
 /// Builder for enabling rapid charge.
-pub type EnableRapidChargeBuilder<'rc, 'ctx, S> =
-    EnableBuilder<'rc, 'ctx, S, RapidChargeController<'ctx>>;
+pub type EnableRapidChargeBuilder<'rc, 'ctx, D, DD, S> =
+    EnableBuilder<'rc, 'ctx, S, RapidChargeController<'ctx, D, DD>, D, DD>;
+
+/// Inner value of [`RapidChargeEnableGuard`].
+pub struct RapidChargeEnableGuardInner<'rc, 'ctx, D, DD>
+where
+    'ctx: 'rc,
+    D: FallibleTryDropStrategy,
+    DD: FallbackTryDropStrategy,
+{
+    /// Reference to the rapid charge controller.
+    pub controller: &'rc mut RapidChargeController<'ctx, D, DD>,
+}
 
 /// Guarantees that rapid charge is enabled for the scope
 /// (excluding external access to `/proc/acpi/call`).
-pub struct RapidChargeEnableGuard<'rc, 'ctx: 'rc> {
-    /// Reference to the rapid charge controller.
-    pub controller: &'rc mut RapidChargeController<'ctx>,
-}
+pub struct RapidChargeEnableGuard<'rc, 'ctx, D = GlobalTryDropStrategyHandler, DD = GlobalFallbackTryDropStrategyHandler>(DropAdapter<RapidChargeEnableGuardInner<'rc, 'ctx, D, DD>>)
+where
+    'ctx: 'rc,
+    D: FallibleTryDropStrategy,
+    DD: FallbackTryDropStrategy;
 
-impl<'rc, 'ctx: 'rc> RapidChargeEnableGuard<'rc, 'ctx> {
-    fn fallible_drop_strategy(&self) -> &'ctx FallibleDropStrategies {
-        self.controller.context.fallible_drop_strategy()
-    }
-}
-
-impl<'rc, 'ctx: 'rc> Drop for RapidChargeEnableGuard<'rc, 'ctx> {
-    fn drop(&mut self) {
-        self.fallible_drop_strategy()
-            .handle_error(self.controller.disable())
-    }
-}
-
-impl<'rc, 'ctx: 'rc> BatteryEnableGuard<'rc, 'ctx, RapidChargeController<'ctx>>
-    for RapidChargeEnableGuard<'rc, 'ctx>
+impl<'rc, 'ctx, D, DD> PureTryDrop for RapidChargeEnableGuardInner<'rc, 'ctx, D, DD>
+    where
+        'ctx: 'rc,
+        D: FallibleTryDropStrategy,
+        DD: FallbackTryDropStrategy,
 {
+    type Error = acpi_call::Error;
+    type FallbackTryDropStrategy = DD;
+    type TryDropStrategy = D;
+
+    fn fallback_try_drop_strategy(&self) -> &Self::FallbackTryDropStrategy {
+        &self.controller.context.fallback_try_drop_strategy
+    }
+
+    fn try_drop_strategy(&self) -> &Self::TryDropStrategy {
+        &self.controller.context.fallible_try_drop_strategy
+    }
+
+    unsafe fn try_drop(&mut self) -> Result<(), Self::Error> {
+        self.controller.disable()
+    }
+}
+
+impl<'rc, 'ctx, D, DD> BatteryEnableGuard<'rc, 'ctx, RapidChargeController<'ctx, D, DD>>
+    for RapidChargeEnableGuard<'rc, 'ctx, D, DD>
+    where
+        'ctx: 'rc,
+        D: FallibleTryDropStrategy,
+        DD: FallbackTryDropStrategy,
+{
+    type Inner = BatteryConservationDisableGuardInner<'rc, 'ctx, D, DD>;
+
     fn new(
-        controller: &'rc mut RapidChargeController<'ctx>,
+        controller: &'rc mut RapidChargeController<'ctx, D, DD>,
         handler: Handler,
     ) -> Result<Self> {
         controller.enable().handler(handler).now()?;
-        Ok(Self { controller })
+        Ok(Self(DropAdapter(RapidChargeEnableGuardInner { controller })))
     }
 }
 
 /// Controller for rapid charge.
 #[derive(Copy, Clone)]
-pub struct RapidChargeController<'ctx> {
+pub struct RapidChargeController<'ctx, D = GlobalTryDropStrategyHandler, DD = GlobalFallbackTryDropStrategyHandler>
+where
+    D: FallibleTryDropStrategy,
+    DD: FallbackTryDropStrategy,
+{
     /// Reference to the context.
-    pub context: &'ctx Context,
+    pub context: &'ctx Context<D, DD>,
 }
 
-impl<'ctx> RapidChargeController<'ctx> {
+impl<'ctx, D, DD> RapidChargeController<'ctx, D, DD>
+where
+    D: FallibleTryDropStrategy,
+    DD: FallbackTryDropStrategy,
+{
     /// Create a new controller.
-    pub const fn new(context: &'ctx Context) -> Self {
+    pub fn new(context: &'ctx Context<D, DD>) -> Self {
         Self { context }
     }
 
     /// Builder for enabling rapid charge.
-    pub fn enable<'rc>(&'rc mut self) -> EnableRapidChargeBuilder<'rc, 'ctx, Begin> {
+    pub fn enable<'rc>(&'rc mut self) -> EnableRapidChargeBuilder<'rc, 'ctx, D, DD, Begin> {
         EnableRapidChargeBuilder::new(self)
     }
 
@@ -123,8 +161,13 @@ impl<'ctx> RapidChargeController<'ctx> {
     }
 }
 
-impl<'this, 'ctx: 'this> BatteryController<'this, 'ctx> for RapidChargeController<'ctx> {
-    type EnableGuard = RapidChargeEnableGuard<'this, 'ctx>;
+impl<'this, 'ctx, D, DD> BatteryController<'this, 'ctx> for RapidChargeController<'ctx, D, DD>
+where
+    'ctx: 'this,
+    D: FallibleTryDropStrategy,
+    DD: FallbackTryDropStrategy,
+{
+    type EnableGuard = RapidChargeEnableGuard<'this, 'ctx, D, DD>;
     type Error = Error;
 
     fn enable_ignore(&mut self) -> acpi_call::Result<()> {
@@ -163,27 +206,47 @@ impl<'this, 'ctx: 'this> BatteryController<'this, 'ctx> for RapidChargeControlle
 /// Enable rapid charge, switching off battery conservation if it's enabled.
 ///
 /// For more advanced usage, see [`RapidChargeController::enable`].
-pub fn enable(context: &Context) -> Result<()> {
+pub fn enable<D, DD>(context: &Context<D, DD>) -> Result<()>
+where
+    D: FallibleTryDropStrategy,
+    DD: FallbackTryDropStrategy,
+{
     context.controllers().rapid_charge().enable().switch().now()
 }
 
 /// Disable rapid charge.
-pub fn disable(context: &Context) -> acpi_call::Result<()> {
+pub fn disable<D, DD>(context: &Context<D, DD>) -> acpi_call::Result<()>
+    where
+        D: FallibleTryDropStrategy,
+        DD: FallbackTryDropStrategy,
+{
     context.controllers().rapid_charge().disable()
 }
 
 /// Get the rapid charge status.
-pub fn get(context: &Context) -> acpi_call::Result<bool> {
+pub fn get<D, DD>(context: &Context<D, DD>) -> acpi_call::Result<bool>
+    where
+        D: FallibleTryDropStrategy,
+        DD: FallbackTryDropStrategy,
+{
     context.controllers().rapid_charge().get()
 }
 
 /// Check if rapid charge is enabled.
-pub fn enabled(context: &Context) -> acpi_call::Result<bool> {
+pub fn enabled<D, DD>(context: &Context<D, DD>) -> acpi_call::Result<bool>
+    where
+        D: FallibleTryDropStrategy,
+        DD: FallbackTryDropStrategy,
+{
     context.controllers().rapid_charge().enabled()
 }
 
 /// Check if rapid charge is disabled.
-pub fn disabled(context: &Context) -> acpi_call::Result<bool> {
+pub fn disabled<D, DD>(context: &Context<D, DD>) -> acpi_call::Result<bool>
+    where
+        D: FallibleTryDropStrategy,
+        DD: FallbackTryDropStrategy,
+{
     context.controllers().rapid_charge().disabled()
 }
 

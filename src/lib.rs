@@ -23,7 +23,6 @@ pub mod battery;
 pub mod battery_conservation;
 
 pub mod context;
-pub mod fallible_drop_strategy;
 pub mod prelude;
 pub mod profile;
 

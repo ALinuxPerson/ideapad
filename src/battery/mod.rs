@@ -3,14 +3,17 @@ mod private;
 
 use crate::{acpi_call, Handler};
 use std::error::Error;
+use try_drop::PureTryDrop;
 
 pub mod enable;
 
 #[doc(hidden)]
 #[allow(drop_bounds)]
 pub trait BatteryEnableGuard<'ctrl, 'ctx: 'ctrl, C: BatteryController<'ctrl, 'ctx>>:
-    Drop + Sized + private::BatteryEnableGuardSeal
+    Sized + private::BatteryEnableGuardSeal
 {
+    type Inner: PureTryDrop;
+
     fn new(controller: &'ctrl mut C, handler: Handler) -> Result<Self, C::Error>;
 }
 

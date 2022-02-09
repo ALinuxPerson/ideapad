@@ -2,12 +2,6 @@
 
 pub use crate::{
     context::Context,
-    fallible_drop_strategy::{
-        DynFallibleDropStrategy,
-        FallibleDropStrategy,
-        ThreadSafe,
-        FallibleDropStrategies,
-    },
     profile::{
         Error as ProfileError,
         Profile,
@@ -40,6 +34,3 @@ pub use crate::acpi_call::{Error as AcpiCallError, Result as AcpiCallResult};
 
 #[cfg(any(feature = "battery_conservation", feature = "rapid_charge"))]
 pub use crate::Handler;
-
-#[cfg(feature = "log_to_writer_on_error")]
-pub use crate::fallible_drop_strategy::ThreadSafeWrite;

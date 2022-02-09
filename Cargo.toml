@@ -6,16 +6,15 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-crossbeam = "0.8.1"
 once_cell = "1.9.0"
-parking_lot = "0.11.2"
 serde = { version = "1.0.132", optional = true, features = ["derive"] }
 smbios-lib = "0.8.0"
 tap = "1.0.1"
 thiserror = "1.0.30"
+try-drop = { git = "https://github.com/ALinuxPerson/try-drop.git" }
 
 [features]
-default = ["core", "profiles", "macros", "fallible_drop_strategies"]
+default = ["core", "profiles", "macros"]
 
 # core
 core = ["battery_conservation", "rapid_charge", "system_performance"]
@@ -32,13 +31,6 @@ ideapad_amd = []
 macros = ["borrowed_cow_array", "borrowed_cow_vec"]
 borrowed_cow_array = []
 borrowed_cow_vec = []
-
-# fallible_drop_strategies
-fallible_drop_strategies = ["log_to_writer_on_error", "panic_on_error", "exit_on_error", "send_errors_to_receiver_on_error"]
-log_to_writer_on_error = []
-panic_on_error = []
-send_errors_to_receiver_on_error = []
-exit_on_error = []
 
 [dev-dependencies]
 serial_test = "0.5.1"
