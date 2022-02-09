@@ -43,7 +43,7 @@ pub enum Error {
 }
 
 /// Inner value for [`BatteryConservationEnableGuard`].
-pub struct BatteryConservationEnableGuardInner<'bc, 'ctx, D, DD>
+pub struct BatteryConservationEnableGuardInner<'bc, 'ctx, D = GlobalTryDropStrategyHandler, DD = GlobalFallbackTryDropStrategyHandler>
     where
         'ctx: 'bc,
         D: FallibleTryDropStrategy,
@@ -84,7 +84,7 @@ pub struct BatteryConservationEnableGuard<'bc, 'ctx, D, DD>(DropAdapter<BatteryC
         DD: FallbackTryDropStrategy;
 
 /// Inner value of [`BatteryConservationDisableGuard`].
-pub struct BatteryConservationDisableGuardInner<'bc, 'ctx, D, DD>
+pub struct BatteryConservationDisableGuardInner<'bc, 'ctx, D = GlobalTryDropStrategyHandler, DD = GlobalFallbackTryDropStrategyHandler>
     where
         'ctx: 'bc,
         D: FallibleTryDropStrategy,
@@ -96,7 +96,7 @@ pub struct BatteryConservationDisableGuardInner<'bc, 'ctx, D, DD>
 
 /// "Guarantees" that the battery conservation mode is disabled for the scope.
 #[must_use]
-pub struct BatteryConservationDisableGuard<'bc, 'ctx, D, DD>(DropAdapter<BatteryConservationDisableGuardInner<'bc, 'ctx, D, DD>>)
+pub struct BatteryConservationDisableGuard<'bc, 'ctx, D = GlobalTryDropStrategyHandler, DD = GlobalFallbackTryDropStrategyHandler>(DropAdapter<BatteryConservationDisableGuardInner<'bc, 'ctx, D, DD>>)
     where
         'ctx: 'bc,
         D: FallibleTryDropStrategy,
