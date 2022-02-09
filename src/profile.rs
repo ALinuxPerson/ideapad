@@ -5,7 +5,7 @@ use std::borrow::Cow;
 use std::io;
 use thiserror::Error;
 
-/// Handy wrapper for [`Error`].
+/// Handy wrapper for [`enum@Error`].
 pub type Result<T, E = Error> = std::result::Result<T, E>;
 
 /// Bad things which could happen when dealing with [`Profile`]s.
@@ -132,7 +132,7 @@ impl SystemPerformanceCommands {
         }
     }
 
-    /// Create a new set of commands. Although more flexible than both [`Self::r#static`] and
+    /// Create a new set of commands. Although more flexible than both [`Self::static`] and
     /// [`Self::dynamic`], you can only use this function at runtime.
     pub fn new(
         set: impl Into<Cow<'static, str>>,
@@ -292,7 +292,7 @@ impl Battery {
         }
     }
 
-    /// Create a new battery configuration. Although more flexible than both [`Self::r#static`] and
+    /// Create a new battery configuration. Although more flexible than both [`Self::static`] and
     /// [`Self::dynamic`], this can only be used at runtime.
     pub fn new(
         set_command: impl Into<Cow<'static, str>>,
@@ -375,7 +375,7 @@ impl SharedBatteryConfiguration {
         }
     }
 
-    /// Create a new battery configuration. Although more flexible than both [`Self::r#static`] and
+    /// Create a new battery configuration. Although more flexible than both [`Self::static`] and
     /// [`Self::dynamic`], this can only be used at runtime.
     pub fn new(
         get_command: impl Into<Cow<'static, str>>,
@@ -517,7 +517,7 @@ impl Profile {
         }
     }
 
-    /// Create a new profile. Although more flexible than both [`Self::r#static`] and
+    /// Create a new profile. Although more flexible than both [`Self::static`] and
     /// [`Self::dynamic`], it can only be constructed at runtime.
     pub fn new(
         name: impl Into<Cow<'static, str>>,

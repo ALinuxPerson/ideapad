@@ -1,6 +1,6 @@
 //! Basic wrapper for the `acpi_call` kernel module.
 //!
-//! Only exposed for [`Result`] and [`Error`].
+//! Only exposed for [`Result`] and [`enum@Error`].
 //!
 //! `acpi_call` support is very basic; there is no verification of commands, the only supported data
 //! type for parameters is [`u32`], and the only output from `acpi_call` which is considered valid
@@ -13,7 +13,7 @@ use thiserror::Error;
 
 const PATH: &str = "/proc/acpi/call";
 
-/// Handy wrapper for [`Error`].
+/// Handy wrapper for [`enum@Error`].
 pub type Result<T> = std::result::Result<T, Error>;
 
 /// Bad things which could happen when using `acpi_call`.

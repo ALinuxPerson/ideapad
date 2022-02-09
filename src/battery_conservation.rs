@@ -15,7 +15,7 @@ use thiserror::Error;
 use try_drop::{DropAdapter, GlobalFallbackTryDropStrategyHandler, GlobalTryDropStrategyHandler};
 use try_drop::prelude::*;
 
-/// Handy wrapper for [`Error`].
+/// Handy wrapper for [`enum@Error`].
 pub type Result<T, E = Error> = std::result::Result<T, E>;
 
 /// Builder for enabling battery conservation.
@@ -35,9 +35,6 @@ pub enum Error {
 
     /// Occurs when you try to enable battery conservation when you have rapid charge already
     /// enabled.
-    ///
-    /// Only appears when you use [`BatteryConservationController::enable_error`] or
-    /// [`BatteryConservationController::enable_with_handler`] with [`Handler::Error`].
     #[error("rapid charge is enabled, disable it first before enabling battery conservation mode")]
     RapidChargeEnabled,
 }

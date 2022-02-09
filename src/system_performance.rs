@@ -9,7 +9,7 @@ use crate::profile::{SystemPerformanceBits, SystemPerformanceParameters};
 use thiserror::Error;
 use try_drop::{DropAdapter, GlobalFallbackTryDropStrategyHandler, GlobalTryDropStrategyHandler};
 
-/// Handy wrapper for [`Error`].
+/// Handy wrapper for [`enum@Error`].
 pub type Result<T, E = Error> = std::result::Result<T, E>;
 
 /// Bad things that could happen when dealing with system performance.

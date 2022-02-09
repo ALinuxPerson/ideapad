@@ -1,6 +1,6 @@
 //! Macros which could be useful in this crate.
 
-/// Create a statically borrowed [`Cow`] array.
+/// Create a statically borrowed clone on write array.
 #[macro_export]
 #[cfg(feature = "borrowed_cow_array")]
 macro_rules! borrowed_cow_array {
@@ -12,7 +12,7 @@ macro_rules! borrowed_cow_array {
     }
 }
 
-/// Create a statically borrowed [`Cow`] [`Vec`].
+/// Create a statically borrowed clone on write [`Vec`].
 #[macro_export]
 #[cfg(feature = "borrowed_cow_vec")]
 macro_rules! borrowed_cow_vec {
