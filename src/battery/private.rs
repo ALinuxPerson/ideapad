@@ -10,14 +10,16 @@ where
     'ctx: 'bc,
     D: FallibleTryDropStrategy,
     DD: FallbackTryDropStrategy,
-{}
+{
+}
 
 impl<'rc, 'ctx, D, DD> BatteryEnableGuardSeal for RapidChargeEnableGuard<'rc, 'ctx, D, DD>
-    where
-        'ctx: 'rc,
-        D: FallibleTryDropStrategy,
-        DD: FallbackTryDropStrategy,
-{}
+where
+    'ctx: 'rc,
+    D: FallibleTryDropStrategy,
+    DD: FallbackTryDropStrategy,
+{
+}
 
 pub trait BatteryDisableGuardSeal {}
 
@@ -27,10 +29,12 @@ impl<'ctx, D, DD> BatteryControllerSeal for BatteryConservationController<'ctx, 
 where
     D: FallibleTryDropStrategy,
     DD: FallbackTryDropStrategy,
-{}
+{
+}
 
 impl<'ctx, D, DD> BatteryControllerSeal for RapidChargeController<'ctx, D, DD>
-    where
-        D: FallibleTryDropStrategy,
-        DD: FallbackTryDropStrategy,
-{}
+where
+    D: FallibleTryDropStrategy,
+    DD: FallbackTryDropStrategy,
+{
+}

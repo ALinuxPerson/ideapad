@@ -542,7 +542,6 @@ impl Profile {
     pub const SEARCH_PATH: &'static [Self] = &[
         #[cfg(feature = "ideapad_15iil05")]
         Self::IDEAPAD_15IIL05,
-
         #[cfg(feature = "ideapad_amd")]
         Self::IDEAPAD_AMD,
     ];

@@ -55,11 +55,11 @@ where
 }
 
 impl<'ctrl, 'ctx, C, D, DD> EnableBuilder<'ctrl, 'ctx, Begin, C, D, DD>
-    where
-        'ctx: 'ctrl,
-        C: BatteryController<'ctrl, 'ctx>,
-        D: FallibleTryDropStrategy,
-        DD: FallbackTryDropStrategy,
+where
+    'ctx: 'ctrl,
+    C: BatteryController<'ctrl, 'ctx>,
+    D: FallibleTryDropStrategy,
+    DD: FallbackTryDropStrategy,
 {
     /// Start the process of enabling a battery mode.
     pub fn new(controller: &'ctrl mut C) -> Self {
@@ -96,11 +96,11 @@ impl<'ctrl, 'ctx, C, D, DD> EnableBuilder<'ctrl, 'ctx, Begin, C, D, DD>
 }
 
 impl<'ctrl, 'ctx, C, D, DD> EnableBuilder<'ctrl, 'ctx, Call, C, D, DD>
-    where
-        'ctx: 'ctrl,
-        C: BatteryController<'ctrl, 'ctx>,
-        D: FallibleTryDropStrategy,
-        DD: FallbackTryDropStrategy,
+where
+    'ctx: 'ctrl,
+    C: BatteryController<'ctrl, 'ctx>,
+    D: FallibleTryDropStrategy,
+    DD: FallbackTryDropStrategy,
 {
     /// Get the handler from the previous stage.
     pub fn handler(&self) -> Handler {
@@ -108,9 +108,7 @@ impl<'ctrl, 'ctx, C, D, DD> EnableBuilder<'ctrl, 'ctx, Call, C, D, DD>
     }
 
     /// Consume the builder, creating an enable guard from it.
-    pub fn guard(
-        self,
-    ) -> Result<C::EnableGuard, C::Error> {
+    pub fn guard(self) -> Result<C::EnableGuard, C::Error> {
         C::EnableGuard::new(self.controller, self.handler())
     }
 

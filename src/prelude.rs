@@ -2,25 +2,18 @@
 
 pub use crate::{
     context::Context,
-    profile::{
-        Error as ProfileError,
-        Profile,
-        Result as ProfileResult,
-    },
+    profile::{Error as ProfileError, Profile, Result as ProfileResult},
 };
 
 #[cfg(feature = "battery_conservation")]
 pub use crate::battery_conservation::{
-    BatteryConservationController,
-    Error as BatteryConservationModeError,
+    BatteryConservationController, Error as BatteryConservationModeError,
     Result as BatteryConservationModeResult,
 };
 
 #[cfg(feature = "rapid_charge")]
 pub use crate::rapid_charge::{
-    Error as RapidChargeError,
-    RapidChargeController,
-    Result as RapidChargeResult
+    Error as RapidChargeError, RapidChargeController, Result as RapidChargeResult,
 };
 
 #[cfg(feature = "system_performance")]
@@ -29,7 +22,11 @@ pub use crate::system_performance::{
     SystemPerformanceController, SystemPerformanceMode,
 };
 
-#[cfg(any(feature = "battery_conservation", feature = "rapid_charge", feature = "system_performance"))]
+#[cfg(any(
+    feature = "battery_conservation",
+    feature = "rapid_charge",
+    feature = "system_performance"
+))]
 pub use crate::acpi_call::{Error as AcpiCallError, Result as AcpiCallResult};
 
 #[cfg(any(feature = "battery_conservation", feature = "rapid_charge"))]

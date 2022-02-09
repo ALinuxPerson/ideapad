@@ -5,12 +5,12 @@
 use crate::acpi_call::{self, acpi_call, acpi_call_expect_valid};
 use crate::battery::enable::{Begin, EnableBuilder};
 use crate::battery::{BatteryController, BatteryEnableGuard};
+use crate::battery_conservation::BatteryConservationDisableGuardInner;
 use crate::context::Context;
-use try_drop::prelude::*;
 use crate::Handler;
 use thiserror::Error;
+use try_drop::prelude::*;
 use try_drop::{DropAdapter, GlobalFallbackTryDropStrategyHandler, GlobalTryDropStrategyHandler};
-use crate::battery_conservation::BatteryConservationDisableGuardInner;
 
 /// Handy wrapper for [`enum@Error`].
 pub type Result<T, E = Error> = std::result::Result<T, E>;
@@ -49,17 +49,22 @@ where
 
 /// Guarantees that rapid charge is enabled for the scope
 /// (excluding external access to `/proc/acpi/call`).
-pub struct RapidChargeEnableGuard<'rc, 'ctx, D = GlobalTryDropStrategyHandler, DD = GlobalFallbackTryDropStrategyHandler>(DropAdapter<RapidChargeEnableGuardInner<'rc, 'ctx, D, DD>>)
+pub struct RapidChargeEnableGuard<
+    'rc,
+    'ctx,
+    D = GlobalTryDropStrategyHandler,
+    DD = GlobalFallbackTryDropStrategyHandler,
+>(DropAdapter<RapidChargeEnableGuardInner<'rc, 'ctx, D, DD>>)
 where
     'ctx: 'rc,
     D: FallibleTryDropStrategy,
     DD: FallbackTryDropStrategy;
 
 impl<'rc, 'ctx, D, DD> PureTryDrop for RapidChargeEnableGuardInner<'rc, 'ctx, D, DD>
-    where
-        'ctx: 'rc,
-        D: FallibleTryDropStrategy,
-        DD: FallbackTryDropStrategy,
+where
+    'ctx: 'rc,
+    D: FallibleTryDropStrategy,
+    DD: FallbackTryDropStrategy,
 {
     type Error = acpi_call::Error;
     type FallbackTryDropStrategy = DD;
@@ -80,10 +85,10 @@ impl<'rc, 'ctx, D, DD> PureTryDrop for RapidChargeEnableGuardInner<'rc, 'ctx, D,
 
 impl<'rc, 'ctx, D, DD> BatteryEnableGuard<'rc, 'ctx, RapidChargeController<'ctx, D, DD>>
     for RapidChargeEnableGuard<'rc, 'ctx, D, DD>
-    where
-        'ctx: 'rc,
-        D: FallibleTryDropStrategy,
-        DD: FallbackTryDropStrategy,
+where
+    'ctx: 'rc,
+    D: FallibleTryDropStrategy,
+    DD: FallbackTryDropStrategy,
 {
     type Inner = BatteryConservationDisableGuardInner<'rc, 'ctx, D, DD>;
 
@@ -92,14 +97,19 @@ impl<'rc, 'ctx, D, DD> BatteryEnableGuard<'rc, 'ctx, RapidChargeController<'ctx,
         handler: Handler,
     ) -> Result<Self> {
         controller.enable().handler(handler).now()?;
-        Ok(Self(DropAdapter(RapidChargeEnableGuardInner { controller })))
+        Ok(Self(DropAdapter(RapidChargeEnableGuardInner {
+            controller,
+        })))
     }
 }
 
 /// Controller for rapid charge.
 #[derive(Copy, Clone)]
-pub struct RapidChargeController<'ctx, D = GlobalTryDropStrategyHandler, DD = GlobalFallbackTryDropStrategyHandler>
-where
+pub struct RapidChargeController<
+    'ctx,
+    D = GlobalTryDropStrategyHandler,
+    DD = GlobalFallbackTryDropStrategyHandler,
+> where
     D: FallibleTryDropStrategy,
     DD: FallbackTryDropStrategy,
 {
@@ -213,36 +223,36 @@ where
 
 /// Disable rapid charge.
 pub fn disable<D, DD>(context: &Context<D, DD>) -> acpi_call::Result<()>
-    where
-        D: FallibleTryDropStrategy,
-        DD: FallbackTryDropStrategy,
+where
+    D: FallibleTryDropStrategy,
+    DD: FallbackTryDropStrategy,
 {
     context.controllers().rapid_charge().disable()
 }
 
 /// Get the rapid charge status.
 pub fn get<D, DD>(context: &Context<D, DD>) -> acpi_call::Result<bool>
-    where
-        D: FallibleTryDropStrategy,
-        DD: FallbackTryDropStrategy,
+where
+    D: FallibleTryDropStrategy,
+    DD: FallbackTryDropStrategy,
 {
     context.controllers().rapid_charge().get()
 }
 
 /// Check if rapid charge is enabled.
 pub fn enabled<D, DD>(context: &Context<D, DD>) -> acpi_call::Result<bool>
-    where
-        D: FallibleTryDropStrategy,
-        DD: FallbackTryDropStrategy,
+where
+    D: FallibleTryDropStrategy,
+    DD: FallbackTryDropStrategy,
 {
     context.controllers().rapid_charge().enabled()
 }
 
 /// Check if rapid charge is disabled.
 pub fn disabled<D, DD>(context: &Context<D, DD>) -> acpi_call::Result<bool>
-    where
-        D: FallibleTryDropStrategy,
-        DD: FallbackTryDropStrategy,
+where
+    D: FallibleTryDropStrategy,
+    DD: FallbackTryDropStrategy,
 {
     context.controllers().rapid_charge().disabled()
 }

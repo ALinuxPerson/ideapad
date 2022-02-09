@@ -1,7 +1,7 @@
 //! Contains [`Context`], a structure which will be used by the majority of this crate.
 
-use try_drop::prelude::*;
 use crate::{profile, Profile};
+use try_drop::prelude::*;
 use try_drop::{GlobalFallbackTryDropStrategyHandler, GlobalTryDropStrategyHandler};
 
 #[cfg(feature = "battery_conservation")]
@@ -15,19 +15,22 @@ use crate::system_performance::SystemPerformanceController;
 
 /// Creates controllers.
 #[derive(Copy, Clone)]
-pub struct Controllers<'ctx, D = GlobalTryDropStrategyHandler, DD = GlobalFallbackTryDropStrategyHandler>
-    where
-        D: FallibleTryDropStrategy,
-        DD: FallbackTryDropStrategy,
+pub struct Controllers<
+    'ctx,
+    D = GlobalTryDropStrategyHandler,
+    DD = GlobalFallbackTryDropStrategyHandler,
+> where
+    D: FallibleTryDropStrategy,
+    DD: FallbackTryDropStrategy,
 {
     /// A reference to the [`Context`].
     pub context: &'ctx Context<D, DD>,
 }
 
 impl<'ctx, D, DD> Controllers<'ctx, D, DD>
-    where
-        D: FallibleTryDropStrategy,
-        DD: FallbackTryDropStrategy,
+where
+    D: FallibleTryDropStrategy,
+    DD: FallbackTryDropStrategy,
 {
     /// Creates a new [`Controllers`] instance.
     pub fn new(context: &'ctx Context<D, DD>) -> Self {
@@ -86,9 +89,9 @@ impl Context {
 }
 
 impl<D, DD> Context<D, DD>
-    where
-        D: FallibleTryDropStrategy,
-        DD: FallbackTryDropStrategy,
+where
+    D: FallibleTryDropStrategy,
+    DD: FallbackTryDropStrategy,
 {
     /// Creates a new context with the specified try drop strategies.
     pub fn new_with_strategies(profile: Profile, main: D, fallback: DD) -> Self {

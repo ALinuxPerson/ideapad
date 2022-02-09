@@ -4,9 +4,9 @@
 
 use crate::acpi_call::{self, acpi_call, acpi_call_expect_valid};
 use crate::context::Context;
-use try_drop::prelude::*;
 use crate::profile::{SystemPerformanceBits, SystemPerformanceParameters};
 use thiserror::Error;
+use try_drop::prelude::*;
 use try_drop::{DropAdapter, GlobalFallbackTryDropStrategyHandler, GlobalTryDropStrategyHandler};
 
 /// Handy wrapper for [`enum@Error`].
@@ -127,9 +127,9 @@ impl SystemPerformanceMode {
 
 /// Inner value of [`SystemPerformanceGuard`].
 pub struct SystemPerformanceGuardInner<'sp, 'ctx, D, DD>
-    where
-        D: FallibleTryDropStrategy,
-        DD: FallbackTryDropStrategy,
+where
+    D: FallibleTryDropStrategy,
+    DD: FallbackTryDropStrategy,
 {
     /// A reference to the system performance controller.
     pub controller: &'sp mut SystemPerformanceController<'ctx, D, DD>,
@@ -140,15 +140,20 @@ pub struct SystemPerformanceGuardInner<'sp, 'ctx, D, DD>
 
 /// Guarantees that a system performance mode will be used for a scope.
 #[must_use]
-pub struct SystemPerformanceGuard<'sp, 'ctx, D = GlobalTryDropStrategyHandler, DD = GlobalFallbackTryDropStrategyHandler>(DropAdapter<SystemPerformanceGuardInner<'sp, 'ctx, D, DD>>)
-    where
-        D: FallibleTryDropStrategy,
-        DD: FallbackTryDropStrategy;
+pub struct SystemPerformanceGuard<
+    'sp,
+    'ctx,
+    D = GlobalTryDropStrategyHandler,
+    DD = GlobalFallbackTryDropStrategyHandler,
+>(DropAdapter<SystemPerformanceGuardInner<'sp, 'ctx, D, DD>>)
+where
+    D: FallibleTryDropStrategy,
+    DD: FallbackTryDropStrategy;
 
 impl<'sp, 'ctx, D, DD> SystemPerformanceGuard<'sp, 'ctx, D, DD>
-    where
-        D: FallibleTryDropStrategy,
-        DD: FallbackTryDropStrategy,
+where
+    D: FallibleTryDropStrategy,
+    DD: FallbackTryDropStrategy,
 {
     /// Set the system performance mode for the scope.
     pub fn new(
@@ -157,7 +162,10 @@ impl<'sp, 'ctx, D, DD> SystemPerformanceGuard<'sp, 'ctx, D, DD>
         on_drop: SystemPerformanceMode,
     ) -> acpi_call::Result<Self> {
         controller.set(on_init)?;
-        Ok(Self(DropAdapter(SystemPerformanceGuardInner { controller, on_drop })))
+        Ok(Self(DropAdapter(SystemPerformanceGuardInner {
+            controller,
+            on_drop,
+        })))
     }
 
     /// Set the new system performance mode for the scope, setting it back to the old system
@@ -171,9 +179,9 @@ impl<'sp, 'ctx, D, DD> SystemPerformanceGuard<'sp, 'ctx, D, DD>
 }
 
 impl<'sp, 'p, D, DD> PureTryDrop for SystemPerformanceGuardInner<'sp, 'p, D, DD>
-    where
-        D: FallibleTryDropStrategy,
-        DD: FallbackTryDropStrategy,
+where
+    D: FallibleTryDropStrategy,
+    DD: FallbackTryDropStrategy,
 {
     type Error = acpi_call::Error;
     type FallbackTryDropStrategy = DD;
@@ -194,8 +202,11 @@ impl<'sp, 'p, D, DD> PureTryDrop for SystemPerformanceGuardInner<'sp, 'p, D, DD>
 
 /// Controller for the system performance mode.
 #[derive(Copy, Clone)]
-pub struct SystemPerformanceController<'ctx, D = GlobalTryDropStrategyHandler, DD = GlobalFallbackTryDropStrategyHandler>
-where
+pub struct SystemPerformanceController<
+    'ctx,
+    D = GlobalTryDropStrategyHandler,
+    DD = GlobalFallbackTryDropStrategyHandler,
+> where
     D: FallibleTryDropStrategy,
     DD: FallbackTryDropStrategy,
 {
@@ -204,9 +215,9 @@ where
 }
 
 impl<'ctx, D, DD> SystemPerformanceController<'ctx, D, DD>
-    where
-        D: FallibleTryDropStrategy,
-        DD: FallbackTryDropStrategy,
+where
+    D: FallibleTryDropStrategy,
+    DD: FallbackTryDropStrategy,
 {
     /// Create a new system performance controller.
     pub fn new(context: &'ctx Context<D, DD>) -> Self {
@@ -301,9 +312,9 @@ where
 
 /// Set the system performance mode to the specified mode.
 pub fn set<D, DD>(context: &Context<D, DD>, mode: SystemPerformanceMode) -> acpi_call::Result<()>
-    where
-        D: FallibleTryDropStrategy,
-        DD: FallbackTryDropStrategy,
+where
+    D: FallibleTryDropStrategy,
+    DD: FallbackTryDropStrategy,
 {
     context.controllers().system_performance().set(mode)
 }

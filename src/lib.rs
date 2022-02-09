@@ -13,7 +13,11 @@ extern crate serde;
 #[cfg(any(feature = "borrowed_cow_vec", feature = "borrowed_cow_array"))]
 pub mod macros;
 
-#[cfg(any(feature = "battery_conservation", feature = "rapid_charge", feature = "system_performance"))]
+#[cfg(any(
+    feature = "battery_conservation",
+    feature = "rapid_charge",
+    feature = "system_performance"
+))]
 pub mod acpi_call;
 
 #[cfg(any(feature = "battery_conservation", feature = "rapid_charge"))]

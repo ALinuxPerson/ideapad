@@ -12,8 +12,8 @@ use crate::context::Context;
 // use crate::fallible_drop_strategy::{FallibleDropStrategies, FallibleDropStrategy};
 use crate::{battery_conservation, Handler};
 use thiserror::Error;
-use try_drop::{DropAdapter, GlobalFallbackTryDropStrategyHandler, GlobalTryDropStrategyHandler};
 use try_drop::prelude::*;
+use try_drop::{DropAdapter, GlobalFallbackTryDropStrategyHandler, GlobalTryDropStrategyHandler};
 
 /// Handy wrapper for [`enum@Error`].
 pub type Result<T, E = Error> = std::result::Result<T, E>;
@@ -40,20 +40,24 @@ pub enum Error {
 }
 
 /// Inner value for [`BatteryConservationEnableGuard`].
-pub struct BatteryConservationEnableGuardInner<'bc, 'ctx, D = GlobalTryDropStrategyHandler, DD = GlobalFallbackTryDropStrategyHandler>
-    where
-        'ctx: 'bc,
-        D: FallibleTryDropStrategy,
-        DD: FallbackTryDropStrategy,
+pub struct BatteryConservationEnableGuardInner<
+    'bc,
+    'ctx,
+    D = GlobalTryDropStrategyHandler,
+    DD = GlobalFallbackTryDropStrategyHandler,
+> where
+    'ctx: 'bc,
+    D: FallibleTryDropStrategy,
+    DD: FallbackTryDropStrategy,
 {
     controller: &'bc mut BatteryConservationController<'ctx, D, DD>,
 }
 
 impl<'bc, 'ctx, D, DD> PureTryDrop for BatteryConservationEnableGuardInner<'bc, 'ctx, D, DD>
-    where
-        'ctx: 'bc,
-        D: FallibleTryDropStrategy,
-        DD: FallbackTryDropStrategy,
+where
+    'ctx: 'bc,
+    D: FallibleTryDropStrategy,
+    DD: FallbackTryDropStrategy,
 {
     type Error = acpi_call::Error;
     type FallbackTryDropStrategy = DD;
@@ -74,18 +78,24 @@ impl<'bc, 'ctx, D, DD> PureTryDrop for BatteryConservationEnableGuardInner<'bc, 
 
 /// "Guarantees" that the battery conservation mode is enabled for the scope.
 #[must_use]
-pub struct BatteryConservationEnableGuard<'bc, 'ctx, D, DD>(DropAdapter<BatteryConservationEnableGuardInner<'bc, 'ctx, D, DD>>)
-    where
-        'ctx: 'bc,
-        D: FallibleTryDropStrategy,
-        DD: FallbackTryDropStrategy;
+pub struct BatteryConservationEnableGuard<'bc, 'ctx, D, DD>(
+    DropAdapter<BatteryConservationEnableGuardInner<'bc, 'ctx, D, DD>>,
+)
+where
+    'ctx: 'bc,
+    D: FallibleTryDropStrategy,
+    DD: FallbackTryDropStrategy;
 
 /// Inner value of [`BatteryConservationDisableGuard`].
-pub struct BatteryConservationDisableGuardInner<'bc, 'ctx, D = GlobalTryDropStrategyHandler, DD = GlobalFallbackTryDropStrategyHandler>
-    where
-        'ctx: 'bc,
-        D: FallibleTryDropStrategy,
-        DD: FallbackTryDropStrategy,
+pub struct BatteryConservationDisableGuardInner<
+    'bc,
+    'ctx,
+    D = GlobalTryDropStrategyHandler,
+    DD = GlobalFallbackTryDropStrategyHandler,
+> where
+    'ctx: 'bc,
+    D: FallibleTryDropStrategy,
+    DD: FallbackTryDropStrategy,
 {
     controller: &'bc mut BatteryConservationController<'ctx, D, DD>,
     handler: Handler,
@@ -93,17 +103,22 @@ pub struct BatteryConservationDisableGuardInner<'bc, 'ctx, D = GlobalTryDropStra
 
 /// "Guarantees" that the battery conservation mode is disabled for the scope.
 #[must_use]
-pub struct BatteryConservationDisableGuard<'bc, 'ctx, D = GlobalTryDropStrategyHandler, DD = GlobalFallbackTryDropStrategyHandler>(DropAdapter<BatteryConservationDisableGuardInner<'bc, 'ctx, D, DD>>)
-    where
-        'ctx: 'bc,
-        D: FallibleTryDropStrategy,
-        DD: FallbackTryDropStrategy;
+pub struct BatteryConservationDisableGuard<
+    'bc,
+    'ctx,
+    D = GlobalTryDropStrategyHandler,
+    DD = GlobalFallbackTryDropStrategyHandler,
+>(DropAdapter<BatteryConservationDisableGuardInner<'bc, 'ctx, D, DD>>)
+where
+    'ctx: 'bc,
+    D: FallibleTryDropStrategy,
+    DD: FallbackTryDropStrategy;
 
 impl<'bc, 'ctx, D, DD> BatteryConservationDisableGuard<'bc, 'ctx, D, DD>
-    where
-        'ctx: 'bc,
-        D: FallibleTryDropStrategy,
-        DD: FallbackTryDropStrategy,
+where
+    'ctx: 'bc,
+    D: FallibleTryDropStrategy,
+    DD: FallbackTryDropStrategy,
 {
     /// Disable battery conservation mode for the scope.
     pub fn new(
@@ -134,15 +149,17 @@ where
     ) -> Result<Self> {
         controller.enable().handler(handler).now()?;
 
-        Ok(Self(DropAdapter(BatteryConservationEnableGuardInner { controller })))
+        Ok(Self(DropAdapter(BatteryConservationEnableGuardInner {
+            controller,
+        })))
     }
 }
 
 impl<'bc, 'ctx, D, DD> PureTryDrop for BatteryConservationDisableGuardInner<'bc, 'ctx, D, DD>
-    where
-        'ctx: 'bc,
-        D: FallibleTryDropStrategy,
-        DD: FallbackTryDropStrategy,
+where
+    'ctx: 'bc,
+    D: FallibleTryDropStrategy,
+    DD: FallbackTryDropStrategy,
 {
     type Error = battery_conservation::Error;
     type FallbackTryDropStrategy = DD;
@@ -163,8 +180,11 @@ impl<'bc, 'ctx, D, DD> PureTryDrop for BatteryConservationDisableGuardInner<'bc,
 
 /// Controller for battery conservation mode.
 #[derive(Copy, Clone)]
-pub struct BatteryConservationController<'ctx, D = GlobalTryDropStrategyHandler, DD = GlobalFallbackTryDropStrategyHandler>
-where
+pub struct BatteryConservationController<
+    'ctx,
+    D = GlobalTryDropStrategyHandler,
+    DD = GlobalFallbackTryDropStrategyHandler,
+> where
     D: FallibleTryDropStrategy,
     DD: FallbackTryDropStrategy,
 {
@@ -173,9 +193,9 @@ where
 }
 
 impl<'ctx, D, DD> BatteryConservationController<'ctx, D, DD>
-    where
-        D: FallibleTryDropStrategy,
-        DD: FallbackTryDropStrategy,
+where
+    D: FallibleTryDropStrategy,
+    DD: FallbackTryDropStrategy,
 {
     /// Create a new battery conservation controller.
     pub fn new(context: &'ctx Context<D, DD>) -> Self {
@@ -233,7 +253,8 @@ impl<'ctx, D, DD> BatteryConservationController<'ctx, D, DD>
     }
 }
 
-impl<'this, 'ctx, D, DD> BatteryController<'this, 'ctx> for BatteryConservationController<'ctx, D, DD>
+impl<'this, 'ctx, D, DD> BatteryController<'this, 'ctx>
+    for BatteryConservationController<'ctx, D, DD>
 where
     'ctx: 'this,
     D: FallibleTryDropStrategy,
@@ -273,9 +294,9 @@ where
 /// Enable battery conservation with the switch handler. If you want more advanced options, see
 /// [`BatteryConservationController::enable`].
 pub fn enable<D, DD>(context: &Context<D, DD>) -> Result<()>
-    where
-        D: FallibleTryDropStrategy,
-        DD: FallbackTryDropStrategy,
+where
+    D: FallibleTryDropStrategy,
+    DD: FallbackTryDropStrategy,
 {
     context
         .controllers()
@@ -296,27 +317,27 @@ where
 
 /// Get the battery conservation status.
 pub fn get<D, DD>(context: &Context<D, DD>) -> acpi_call::Result<bool>
-    where
-        D: FallibleTryDropStrategy,
-        DD: FallbackTryDropStrategy,
+where
+    D: FallibleTryDropStrategy,
+    DD: FallbackTryDropStrategy,
 {
     context.controllers().battery_conservation().get()
 }
 
 /// Check if battery conservation is enabled.
 pub fn enabled<D, DD>(context: &Context<D, DD>) -> acpi_call::Result<bool>
-    where
-        D: FallibleTryDropStrategy,
-        DD: FallbackTryDropStrategy,
+where
+    D: FallibleTryDropStrategy,
+    DD: FallbackTryDropStrategy,
 {
     context.controllers().battery_conservation().enabled()
 }
 
 /// Check if battery conservation is disabled.
 pub fn disabled<D, DD>(context: &Context<D, DD>) -> acpi_call::Result<bool>
-    where
-        D: FallibleTryDropStrategy,
-        DD: FallbackTryDropStrategy,
+where
+    D: FallibleTryDropStrategy,
+    DD: FallbackTryDropStrategy,
 {
     context.controllers().battery_conservation().disabled()
 }
