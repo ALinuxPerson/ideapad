@@ -2,7 +2,6 @@
 
 use try_drop::prelude::*;
 use crate::{profile, Profile};
-use once_cell::sync::OnceCell;
 use try_drop::{GlobalFallbackTryDropStrategyHandler, GlobalTryDropStrategyHandler};
 
 #[cfg(feature = "battery_conservation")]
@@ -62,7 +61,11 @@ where
 {
     /// The profile.
     pub profile: Profile,
+
+    /// The try drop strategy which will be run first.
     pub fallible_try_drop_strategy: D,
+
+    /// The try drop strategy which will be run if the first try drop strategy fails.
     pub fallback_try_drop_strategy: DD,
 }
 

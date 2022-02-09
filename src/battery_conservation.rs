@@ -83,6 +83,7 @@ pub struct BatteryConservationEnableGuard<'bc, 'ctx, D, DD>(DropAdapter<BatteryC
         D: FallibleTryDropStrategy,
         DD: FallbackTryDropStrategy;
 
+/// Inner value of [`BatteryConservationDisableGuard`].
 pub struct BatteryConservationDisableGuardInner<'bc, 'ctx, D, DD>
     where
         'ctx: 'bc,

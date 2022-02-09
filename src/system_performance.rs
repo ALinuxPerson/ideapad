@@ -125,6 +125,7 @@ impl SystemPerformanceMode {
     }
 }
 
+/// Inner value of [`SystemPerformanceGuard`].
 pub struct SystemPerformanceGuardInner<'sp, 'ctx, D, DD>
     where
         D: FallibleTryDropStrategy,
