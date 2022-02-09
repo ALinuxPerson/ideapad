@@ -7,7 +7,7 @@ use crate::context::Context;
 use try_drop::prelude::*;
 use crate::profile::{SystemPerformanceBits, SystemPerformanceParameters};
 use thiserror::Error;
-use try_drop::DropAdapter;
+use try_drop::{DropAdapter, GlobalFallbackTryDropStrategyHandler, GlobalTryDropStrategyHandler};
 
 /// Handy wrapper for [`Error`].
 pub type Result<T, E = Error> = std::result::Result<T, E>;
@@ -140,7 +140,7 @@ pub struct SystemPerformanceGuardInner<'sp, 'ctx, D, DD>
 
 /// Guarantees that a system performance mode will be used for a scope.
 #[must_use]
-pub struct SystemPerformanceGuard<'sp, 'ctx, D, DD>(DropAdapter<SystemPerformanceGuardInner<'sp, 'ctx, D, DD>>)
+pub struct SystemPerformanceGuard<'sp, 'ctx, D = GlobalTryDropStrategyHandler, DD = GlobalFallbackTryDropStrategyHandler>(DropAdapter<SystemPerformanceGuardInner<'sp, 'ctx, D, DD>>)
     where
         D: FallibleTryDropStrategy,
         DD: FallbackTryDropStrategy;
@@ -194,7 +194,7 @@ impl<'sp, 'p, D, DD> PureTryDrop for SystemPerformanceGuardInner<'sp, 'p, D, DD>
 
 /// Controller for the system performance mode.
 #[derive(Copy, Clone)]
-pub struct SystemPerformanceController<'ctx, D, DD>
+pub struct SystemPerformanceController<'ctx, D = GlobalTryDropStrategyHandler, DD = GlobalFallbackTryDropStrategyHandler>
 where
     D: FallibleTryDropStrategy,
     DD: FallbackTryDropStrategy,
